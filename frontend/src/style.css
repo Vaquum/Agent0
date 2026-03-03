@@ -1,0 +1,283 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  background: #0d1117;
+  color: #c9d1d9;
+  line-height: 1.5;
+  padding: 1.5rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #21262d;
+  flex-shrink: 0;
+}
+
+h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #f0f6fc;
+}
+
+h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.status {
+  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  background: #21262d;
+}
+
+.status-ok {
+  color: #3fb950;
+}
+
+.status-error {
+  color: #f85149;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 6px 1fr;
+  margin-top: 1.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel {
+  min-height: 0;
+  padding: 0 0.75rem;
+}
+
+.panel-left {
+  overflow-y: auto;
+}
+
+.panel-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel-divider {
+  width: 6px;
+  cursor: col-resize;
+  background: #21262d;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.panel-divider:hover,
+.panel-divider.dragging {
+  background: #58a6ff;
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #21262d;
+  color: #8b949e;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #161b22;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+tr:hover td {
+  background: #161b22;
+}
+
+.empty {
+  color: #484f58;
+  font-style: italic;
+  padding: 1rem 0;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.badge-success {
+  background: #0d2818;
+  color: #3fb950;
+}
+
+.badge-failure {
+  background: #2d1216;
+  color: #f85149;
+}
+
+.badge-timeout {
+  background: #2d2200;
+  color: #d29922;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.pagination button {
+  background: #21262d;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  padding: 0.3rem 0.8rem;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #30363d;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.log-header h2 {
+  margin-bottom: 0;
+}
+
+.log-header select {
+  background: #21262d;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+.log-output {
+  flex: 1;
+  overflow-y: auto;
+  background: #010409;
+  border: 1px solid #21262d;
+  border-radius: 3px;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.log-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: 1px 0;
+}
+
+.log-DEBUG {
+  color: #484f58;
+}
+
+.log-INFO {
+  color: #8b949e;
+}
+
+.log-WARNING {
+  color: #d29922;
+}
+
+.log-ERROR {
+  color: #f85149;
+}
+
+.log-executor {
+  color: #58a6ff;
+}
+
+.ref-link {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.ref-link:hover {
+  text-decoration: underline;
+}
+
+.row-clickable {
+  cursor: pointer;
+}
+
+.row-clickable:hover td {
+  background: #1c2128;
+}
+
+.row-active td {
+  background: #0c2d6b;
+}
+
+.row-active:hover td {
+  background: #0c2d6b;
+}
+
+.heading-clickable {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.heading-clickable:hover {
+  color: #58a6ff;
+}
+
+.mode-hint {
+  font-size: 0.7rem;
+  color: #484f58;
+  font-style: italic;
+}

@@ -1,0 +1,35 @@
+.git
+.gitignore
+.cursorignore
+.DS_Store
+.claude/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Frontend artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Runtime data
+data/
+/data/
+*.log
+
+# Non-runtime sources
+tests/
+spec/
+docs/
