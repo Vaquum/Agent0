@@ -6,10 +6,15 @@ on:
       - main
 
 jobs:
-  intentional_failure:
+  validation:
     runs-on: ubuntu-latest
     steps:
-      - name: Intentional failing check for Agent1 CI scenario
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate repository layout
         run: |
-          echo 'Intentional failure for CI remediation validation.'
-          exit 1
+          test -f README.md
+          test -f LICENSE
+          test -d .github/workflows
+          echo 'Repository layout validation passed.'
