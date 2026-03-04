@@ -1,0 +1,15 @@
+name: Agent1 CI Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  intentional_failure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Intentional failing check for Agent1 CI scenario
+        run: |
+          echo 'Intentional failure for CI remediation validation.'
+          exit 1
