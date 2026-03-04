@@ -7,6 +7,7 @@ on:
 
 jobs:
   intentional_failure:
+    name: intentional_failure
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -18,3 +19,11 @@ jobs:
           test -f LICENSE
           test -d .github/workflows
           echo 'Repository layout validation passed.'
+
+  validation:
+    name: validation
+    runs-on: ubuntu-latest
+    needs: intentional_failure
+    steps:
+      - name: Mirror validation success context
+        run: echo 'Validation alias check passed.'
