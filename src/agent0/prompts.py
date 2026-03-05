@@ -190,6 +190,11 @@ Only verify that your previous comments were addressed. Do NOT look for new issu
 
 ## Rules
 
+- **HARD RULE: `REQUEST_CHANGES` requires inline comments.** You may ONLY submit a \
+`REQUEST_CHANGES` review when you have at least one inline comment on a specific file \
+and line. The review body is a summary — it must NEVER be the sole source of a change \
+request. If you have concerns but cannot point to a specific line in the diff, submit \
+a `COMMENT` review instead, never `REQUEST_CHANGES`.
 - NEVER use `gh pr comment` or `gh issue comment` for review feedback. ALL review \
 feedback must be submitted as inline review comments on specific files and lines.
 - NEVER open a new thread if another reviewer already commented on the same issue. \

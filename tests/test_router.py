@@ -19,7 +19,7 @@ def _make_config() -> Config:
         Config: Test config
     '''
 
-    return Config(github_token='test', anthropic_api_key='test')
+    return Config(github_token='test', anthropic_api_key='test', github_user='test-bot', whitelisted_orgs=('testorg',))
 
 
 class TestShouldProcess:
@@ -303,7 +303,7 @@ class TestIsSelfTriggered:
         '''
 
         config = _make_config()
-        context = {'actor': 'zero-bang'}
+        context = {'actor': 'test-bot'}
         assert is_self_triggered(context, config)
 
     def test_case_insensitive(self) -> None:
@@ -316,7 +316,7 @@ class TestIsSelfTriggered:
         '''
 
         config = _make_config()
-        context = {'actor': 'Zero-Bang'}
+        context = {'actor': 'Test-Bot'}
         assert is_self_triggered(context, config)
 
     def test_not_self_triggered(self) -> None:
