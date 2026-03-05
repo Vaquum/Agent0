@@ -28,7 +28,7 @@ async def retry_with_backoff(
             last_error = e
             delay = base_delay * (2 ** attempt)
             log.warning('Attempt %d failed: %s, retrying in %ds', attempt, e, delay)
-            time.sleep(delay)  # Bug: blocking sleep in async function
+            await asyncio.sleep(delay)
     raise last_error
 
 
@@ -37,10 +37,13 @@ def parse_rate_limit_headers(headers: dict) -> dict:
 
     Returns dict with remaining, limit, and reset timestamp.
     """
+    def _int_or_none(val: str | None) -> int | None:
+        return int(val) if val is not None else None
+
     return {
-        'remaining': headers.get('X-RateLimit-Remaining'),  # Bug: returns str not int
-        'limit': headers.get('X-RateLimit-Limit'),
-        'reset': headers.get('X-RateLimit-Reset'),
+        'remaining': _int_or_none(headers.get('X-RateLimit-Remaining')),
+        'limit': _int_or_none(headers.get('X-RateLimit-Limit')),
+        'reset': _int_or_none(headers.get('X-RateLimit-Reset')),
     }
 
 
