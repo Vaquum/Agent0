@@ -11,6 +11,10 @@ from datetime import datetime
 
 log = logging.getLogger(__name__)
 
+# Claude Sonnet pricing (USD per million tokens)
+INPUT_COST_PER_MILLION = 3.0
+OUTPUT_COST_PER_MILLION = 15.0
+
 
 def sanitize_branch_name(name: str) -> str:
     """Convert a string to a valid git branch name."""
@@ -100,8 +104,8 @@ def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     - Input: $3 per million tokens
     - Output: $15 per million tokens
     """
-    input_cost = input_tokens * 3.0 / 1000000
-    output_cost = output_tokens * 15.0 / 1000000
+    input_cost = input_tokens * INPUT_COST_PER_MILLION / 1_000_000
+    output_cost = output_tokens * OUTPUT_COST_PER_MILLION / 1_000_000
     return input_cost + output_cost
 
 
