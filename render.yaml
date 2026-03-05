@@ -10,10 +10,12 @@ services:
     envVars:
       - key: GITHUB_TOKEN
         sync: false
+      - key: GITHUB_USER
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: WHITELISTED_ORGS
-        value: vaquum
+        sync: false
       - key: POLL_INTERVAL
         value: "30"
       - key: EXECUTOR_TIMEOUT
@@ -24,8 +26,6 @@ services:
         value: INFO
       - key: DATA_DIR
         value: /data
-      - key: GITHUB_USER
-        value: zero-bang
     disk:
       name: agent0-data
       mountPath: /data
