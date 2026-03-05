@@ -3,6 +3,7 @@
 ## [0.1.2] - 2026-03-05
 
 ### Changed
+- `load_config` now raises `ValueError` at startup if `WHITELISTED_ORGS` resolves to an empty list, providing a clear error message instead of silently operating with no allowed organizations
 - `__version__` in `__init__.py` is now read from package metadata via `importlib.metadata` instead of being hardcoded
 
 ## [0.1.1] - 2026-03-05

@@ -99,6 +99,22 @@ class TestLoadConfig:
         config = load_config()
         assert config.whitelisted_orgs == ('org1', 'org2', 'org3')
 
+    def test_empty_whitelisted_orgs_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+
+        '''
+        Compute that an empty WHITELISTED_ORGS raises ValueError.
+
+        Returns:
+            None
+        '''
+
+        monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test')
+        monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
+        monkeypatch.setenv('WHITELISTED_ORGS', ' , , ')
+
+        with pytest.raises(ValueError, match='WHITELISTED_ORGS must contain at least one organization'):
+            load_config()
+
 
 class TestConfig:
 
