@@ -7,7 +7,7 @@
 # expects. Dev dashboard: http://localhost:9998
 # ---------------------------------------------------------------------------
 
-include .env
+-include .env
 export
 
 IMAGE := agent0-dev
