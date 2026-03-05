@@ -1,4 +1,7 @@
-"""Utility functions for Agent0."""
+"""Utility functions for Agent0.
+
+Common helpers used across the Agent0 codebase.
+"""
 
 import os
 import json
