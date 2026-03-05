@@ -263,10 +263,13 @@ apply, but think carefully before removing any — most will be relevant.
 
 {rfc_template}
 
-Once you have composed the full RFC body, create the issue:
+Once you have composed the full RFC body, create the issue. Use --body-file for the \
+multi-line body:
 
 ```bash
-gh issue create --repo {agent0_repo} --title "RFC-XXXX: <your title>" --body "<your RFC body>"
+cat << 'EOF' | gh issue create --repo {agent0_repo} --title "RFC-XXXX: <your title>" --body-file -
+<your RFC body>
+EOF
 ```
 
 The title should capture the essence of what you want to improve about yourself. \

@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import logging
 import random
-import traceback
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -167,12 +166,8 @@ class Reflector:
             )
 
             if landed:
-                try:
-                    rfc_url = await self._reflect(owner, repo, number)
-                    self._record_considered(pr_key, dice_landed=True, rfc_issue_url=rfc_url)
-                except Exception:
-                    log.warning('Reflection failed for %s: %s', pr_key, traceback.format_exc())
-                    self._record_considered(pr_key, dice_landed=True)
+                rfc_url = await self._reflect(owner, repo, number)
+                self._record_considered(pr_key, dice_landed=True, rfc_issue_url=rfc_url)
             else:
                 self._record_considered(pr_key, dice_landed=False)
 
@@ -461,7 +456,8 @@ def _agent0_repo_parts(config: Config) -> tuple[str, str]:
     """
     Compute the owner and repo for Agent0 itself.
 
-    Uses the first whitelisted org as the owner.
+    Uses the first whitelisted org as the owner and config.agent0_repo
+    as the repo name.
 
     Args:
         config (Config): Application configuration
@@ -470,8 +466,8 @@ def _agent0_repo_parts(config: Config) -> tuple[str, str]:
         tuple[str, str]: Owner and repo name for Agent0
     """
 
-    owner = config.whitelisted_orgs[0] if config.whitelisted_orgs else 'Vaquum'
-    return owner, 'Agent0'
+    owner = config.whitelisted_orgs[0] if config.whitelisted_orgs else ''
+    return owner, config.agent0_repo
 
 
 def _read_rfc_template(workspace: Path) -> str:

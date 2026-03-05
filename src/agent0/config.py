@@ -19,6 +19,7 @@ class Config:
         anthropic_api_key (str): API key for Claude Code
         github_user (str): GitHub username for the agent
         whitelisted_orgs (tuple[str, ...]): Organizations to respond to
+        agent0_repo (str): Repository name for Agent0 itself (e.g. 'Agent0')
         poll_interval (int): Seconds between notification polls
         executor_timeout (int): Max seconds per Claude Code session
         max_turns (int): Max agentic turns per Claude Code session
@@ -34,6 +35,7 @@ class Config:
     anthropic_api_key: str
     github_user: str
     whitelisted_orgs: tuple[str, ...]
+    agent0_repo: str = 'Agent0'
     poll_interval: int = 30
     executor_timeout: int = 1800
     max_turns: int = 100
@@ -81,6 +83,7 @@ class Config:
             f'anthropic_api_key={_mask(self.anthropic_api_key)} '
             f'poll_interval={self.poll_interval} '
             f'whitelisted_orgs={",".join(self.whitelisted_orgs)} '
+            f'agent0_repo={self.agent0_repo} '
             f'executor_timeout={self.executor_timeout} '
             f'max_turns={self.max_turns} '
             f'log_level={self.log_level} '
@@ -129,12 +132,14 @@ def load_config() -> Config:
     log_level = os.environ.get('LOG_LEVEL', 'INFO')
     data_dir = Path(os.environ.get('DATA_DIR', '/data'))
     port = int(os.environ.get('PORT', '9999'))
+    agent0_repo = os.environ.get('AGENT0_REPO', 'Agent0')
 
     return Config(
         github_token=github_token,
         anthropic_api_key=anthropic_api_key,
         github_user=github_user,
         whitelisted_orgs=whitelisted_orgs,
+        agent0_repo=agent0_repo,
         poll_interval=poll_interval,
         executor_timeout=executor_timeout,
         max_turns=max_turns,

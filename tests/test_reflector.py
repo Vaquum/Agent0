@@ -200,6 +200,36 @@ class TestSkipOpenPR:
         assert 'vaquum/confab#14' not in reflector._considered
 
 
+class TestReflectionTriggered:
+    @pytest.mark.asyncio
+    async def test_closed_pr_dice_lands_calls_reflect(self, tmp_path: Path) -> None:
+        config = _make_config(tmp_path)
+        audit_dir = tmp_path / 'audit'
+        audit_dir.mkdir()
+
+        entry = _make_audit_entry(event_type='review_request', repo='vaquum/confab', reference=14)
+        audit_file = audit_dir / '2026-03-05.jsonl'
+        audit_file.write_text(json.dumps(entry) + '\n', encoding='utf-8')
+
+        mock_client = AsyncMock()
+        mock_client.get_pull_request = AsyncMock(return_value={'state': 'closed'})
+
+        reflector = Reflector(config, mock_client, AsyncMock())
+
+        with (
+            patch('agent0.reflector.random') as mock_random,
+            patch.object(
+                reflector, '_reflect', new_callable=AsyncMock, return_value=None
+            ) as mock_reflect,
+        ):
+            mock_random.randint.return_value = 1
+            await reflector.scan()
+
+            mock_reflect.assert_called_once_with('vaquum', 'confab', 14)
+
+        assert 'vaquum/confab#14' in reflector._considered
+
+
 class TestExtractIssueUrl:
     def test_extracts_url_from_response(self) -> None:
         from agent0.executor import ExecutorResult
