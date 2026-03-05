@@ -20,6 +20,9 @@ async def retry_with_backoff(
         max_retries: Maximum number of retry attempts
         base_delay: Base delay in seconds between retries
     """
+    if max_retries < 1:
+        raise ValueError('max_retries must be >= 1')
+
     last_error = None
     for attempt in range(max_retries):
         try:
@@ -70,8 +73,8 @@ class CircuitBreaker:
     def can_proceed(self) -> bool:
         if self.state == 'closed':
             return True
-        # Bug: no half-open state — once open, checks time but never transitions back
         elapsed = time.time() - self.last_failure_time
         if elapsed > self.recovery_time:
+            self.state = 'half-open'
             return True
         return False
