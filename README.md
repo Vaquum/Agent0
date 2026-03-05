@@ -1,43 +1,64 @@
-# Agent0
+<h1 align="center">
+  <br>
+<a href="https://github.com/Vaquum"><img src="https://github.com/Vaquum/Home/raw/main/assets/Logo.png" alt="Vaquum" width="150"></a>
+<br>
+</h1>
+<h3 align="center">Agent0 is an autonomous software engineer that lives on GitHub.</h3>
+<p align="center">
+<a href="#value-proposition">Value Proposition</a> •
+<a href="#quick-start">Quick Start</a> •
+<a href="#contributing">Contributing</a> •
+<a href="#license">License</a>
+</p>
+<hr>
 
-Agent0 is an autonomous GitHub engineering daemon. It polls GitHub notifications,
-classifies actionable events, runs Claude Code tasks in isolated workspaces,
-and exposes a live operations dashboard via FastAPI.
+# Value Proposition
 
-## Quick Start
+Agent0 polls GitHub notifications, classifies actionable events (mentions, assignments, review requests, CI failures), runs Claude Code tasks in isolated workspaces, and posts results back — all without human intervention.
+
+# Quick Start
+
+If your environment is already configured, use these three examples:
+
+1) Running the app
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-
-cp .env.example .env
-
-cd frontend
-npm ci
-npm run build
-cd ..
-
-python -m agent0
+make dev
 ```
 
-The service runs on `http://localhost:9999` and health checks on `/health`.
+2) Checking the dashboard
 
-## Docker and Render
+```bash
+curl http://localhost:9998/health
+```
 
-- Docker image builds from `Dockerfile` (multi-stage frontend + Python runtime)
-- Render deployment is defined in `render.yaml`
-- Persistent runtime data is mounted at `/data`
+3) Triggering Agent0
 
-## Configuration
+```
+@your-agent-github-user please fix the typo in README.md
+```
 
-Required:
+For complete setup, configuration, and deployment instructions, see [Get Started](docs/Developer/Get-Started.md).
 
-- `GITHUB_TOKEN`
-- `ANTHROPIC_API_KEY`
+# Contributing
 
-All variables are documented in `docs/Developer/Configuration.md`.
+The simplest way to contribute is by joining open discussions or picking up an issue:
 
-## Developer Docs
+- [Open discussions](https://github.com/Vaquum/Agent0/issues?q=is%3Aissue%20state%3Aopen%20label%3Aquestion%2Fdiscussion)
+- [Open issues](https://github.com/Vaquum/Agent0/issues)
 
-Start with `docs/Developer/README.md` for architecture, setup, deployment, and testing guides.
+Before contributing, start with [Get Started](docs/Developer/Get-Started.md).
+
+# Vulnerabilities
+
+Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/Vaquum/Agent0/security/advisories/new).
+
+# Citations
+
+If you use Agent0 for published work, please cite:
+
+Agent0 [Computer software]. (2026). Retrieved from http://github.com/vaquum/agent0.
+
+# License
+
+[MIT License](LICENSE).
