@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - 2026-03-05
+
+### Changed
+- `__version__` in `__init__.py` is now read from package metadata via `importlib.metadata` instead of being hardcoded
+
 ## [0.1.1] - 2026-03-05
 
 ### Changed
