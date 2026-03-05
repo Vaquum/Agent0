@@ -73,8 +73,11 @@ class CircuitBreaker:
     def can_proceed(self) -> bool:
         if self.state == 'closed':
             return True
+        if self.state == 'half-open':
+            return False  # Already allowed one probe, wait for result
+        # state == 'open'
         elapsed = time.time() - self.last_failure_time
         if elapsed > self.recovery_time:
             self.state = 'half-open'
-            return True
+            return True  # Allow exactly one probe call
         return False
