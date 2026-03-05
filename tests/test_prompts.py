@@ -17,6 +17,8 @@ class TestPromptsModule:
             'ASSIGNED_ISSUE',
             'REVIEW_PR',
             'CI_FAILURE',
+            'SELF_REFLECTION',
+            'SELF_REFLECTION_RFC',
         ]
         for name in expected:
             assert hasattr(prompts, name), f'{name} not found in prompts module'
@@ -182,3 +184,47 @@ class TestPromptsModule:
             diff='diff',
             formatted_comments='comments',
         )
+        prompts.SELF_REFLECTION.format(
+            number=1,
+            owner='testorg',
+            repo='testrepo',
+            full_context='context here',
+        )
+        prompts.SELF_REFLECTION_RFC.format(
+            reflection_output='reflection text',
+            rfc_template='template here',
+            agent0_repo='testorg/Agent0',
+        )
+
+    def test_self_reflection_is_open_ended(self) -> None:
+        """
+        Compute that SELF_REFLECTION prompt has no RFC or issue mention.
+
+        Phase 1 must be pure reflection with no agenda.
+
+        Returns:
+            None
+        """
+
+        text = prompts.SELF_REFLECTION.lower()
+        assert 'rfc' not in text
+        assert 'issue' not in text
+        assert 'gh issue create' not in text
+        assert '{full_context}' in prompts.SELF_REFLECTION
+        assert 'make myself better' in text
+
+    def test_self_reflection_rfc_has_template_sections(self) -> None:
+        """
+        Compute that SELF_REFLECTION_RFC prompt includes RFC creation mechanism.
+
+        Phase 2 must reveal the RFC mechanism and reference the template.
+
+        Returns:
+            None
+        """
+
+        assert '{rfc_template}' in prompts.SELF_REFLECTION_RFC
+        assert '{reflection_output}' in prompts.SELF_REFLECTION_RFC
+        assert 'gh issue create' in prompts.SELF_REFLECTION_RFC
+        assert 'RFC' in prompts.SELF_REFLECTION_RFC
+        assert '{agent0_repo}' in prompts.SELF_REFLECTION_RFC

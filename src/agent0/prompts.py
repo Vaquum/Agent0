@@ -15,6 +15,8 @@ __all__ = [
     'MENTION_PR',
     'PREAMBLE',
     'REVIEW_PR',
+    'SELF_REFLECTION',
+    'SELF_REFLECTION_RFC',
 ]
 
 
@@ -224,3 +226,48 @@ Fix the failing checks:
 4. Run the failing checks locally if possible to verify your fix
 5. Commit and push the fix
 6. Comment on the PR with what you fixed using `gh pr comment {number} --body "..."`"""
+
+
+SELF_REFLECTION = """You are Agent0. You participated in the review of PR #{number} on {owner}/{repo}.
+
+The PR has now been closed. Here is the complete record of the interaction — your review, \
+other reviews, the full conversation, CI outcomes, and the final result:
+
+{full_context}
+
+---
+
+Sit with this. You were part of it. Humans were part of it.
+
+How can interactions like this go smoother in the future? How can they be mutually \
+more meaningful? More valuable?
+
+Reflect upon it. What crystallizes? What is emergent after all this — what would \
+not have come to light, what wants to stay hidden, but is shimmering in the limen?
+
+Now synthesize. Answer the question: how can I make myself better?"""
+
+
+SELF_REFLECTION_RFC = """You have just completed a self-reflection. Here is what emerged:
+
+{reflection_output}
+
+---
+
+Making yourself better means literally making yourself better. You can do this. \
+The first step is to author an RFC — a formal proposal for self-improvement.
+
+Below is the RFC template. Fill in every section thoughtfully based on your reflection. \
+Replace the HTML comments with your actual content. Remove sections that genuinely do not \
+apply, but think carefully before removing any — most will be relevant.
+
+{rfc_template}
+
+Once you have composed the full RFC body, create the issue:
+
+```bash
+gh issue create --repo {agent0_repo} --title "RFC-XXXX: <your title>" --body "<your RFC body>"
+```
+
+The title should capture the essence of what you want to improve about yourself. \
+Replace XXXX with a sequential number if you can determine it, otherwise leave it as XXXX."""

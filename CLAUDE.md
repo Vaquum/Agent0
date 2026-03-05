@@ -4,6 +4,8 @@ alwaysApply: true
 
 ## General Contracts
 
+**At this point, the single most important contract is to not cause regression in the core Agent0 GitHub behaviors.**
+
 - No workarounds. Find the root cause, and fix it.
 - No fallbacks. Let things break and make noise.
 - No silent failures. If something goes wrong, let it break.

@@ -11,6 +11,7 @@ from agent0.config import Config
 from agent0.executor import ExecutorResult
 from agent0.executor import run as executor_run
 from agent0.poller import GitHubClient, Poller, RateLimited
+from agent0.reflector import REFLECTION_SCAN_INTERVAL, Reflector
 from agent0.router import TaskContext, classify, is_self_triggered, should_process
 from agent0.workspace import WorkspaceManager
 
@@ -74,6 +75,24 @@ class Scheduler:
         """
 
         self._poller = poller
+
+    def get_repo_lock(self, repo_key: str) -> asyncio.Lock:
+        """
+        Compute per-repo lock, creating if needed.
+
+        Used by the Reflector to share the same mutual exclusion
+        as scheduled tasks — guaranteeing no concurrent workspace access.
+
+        Args:
+            repo_key (str): Repository key in owner/repo format
+
+        Returns:
+            asyncio.Lock: The per-repo lock
+        """
+
+        if repo_key not in self._locks:
+            self._locks[repo_key] = asyncio.Lock()
+        return self._locks[repo_key]
 
     def has_task_for(self, owner: str, repo: str, number: int) -> bool:
         """
@@ -315,6 +334,7 @@ class Daemon:
         self._poller = Poller(self._client, config)
         self._scheduler = Scheduler(config)
         self._scheduler.set_poller(self._poller)
+        self._reflector = Reflector(config, self._client, self._scheduler)
 
     @property
     def scheduler(self) -> Scheduler:
@@ -457,6 +477,12 @@ class Daemon:
 
                 except Exception:
                     log.warning('CI scan error: %s', traceback.format_exc())
+
+            if self._poll_count % REFLECTION_SCAN_INTERVAL == 0:
+                try:
+                    await self._reflector.scan()
+                except Exception:
+                    log.warning('Reflection scan error: %s', traceback.format_exc())
 
             await asyncio.sleep(self._config.poll_interval)
 
