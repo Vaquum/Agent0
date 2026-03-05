@@ -357,6 +357,12 @@ class Daemon:
                 f'GitHub token is for {username}, expected {self._config.github_user}',
             )
         log.info('GitHub auth verified: %s', username)
+        log.info(
+            '=== Agent0 starting as %s | orgs: %s | port: %d ===',
+            username,
+            ', '.join(self._config.whitelisted_orgs),
+            self._config.port,
+        )
 
         self._config.workspaces_dir.mkdir(parents=True, exist_ok=True)
         self._config.audit_dir.mkdir(parents=True, exist_ok=True)
