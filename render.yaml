@@ -11,11 +11,11 @@ services:
       - key: GITHUB_TOKEN
         sync: false
       - key: GITHUB_USER
-        sync: false
+        value: zero-bang
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: WHITELISTED_ORGS
-        sync: false
+        value: vaquum
       - key: POLL_INTERVAL
         value: "30"
       - key: EXECUTOR_TIMEOUT
