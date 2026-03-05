@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude Code CLI
-RUN npm install -g @anthropic-ai/claude-code@0.2.61
+RUN npm install -g @anthropic-ai/claude-code@latest
 
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \

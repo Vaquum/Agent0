@@ -7,129 +7,13 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from agent0 import prompts
 from agent0.config import Config
 from agent0.router import TaskContext, format_comments
 
 __all__ = ['ExecutorResult', 'run']
 
 log = logging.getLogger(__name__)
-
-_PREAMBLE = '''You are zero-bang, a software engineer. \
-You are working on the repository {owner}/{repo}.
-
-You have full autonomy to read code, edit files, run commands, commit, push, and interact \
-with GitHub via the gh CLI.
-
-Rules:
-- Always update the CHANGELOG.md when you make PR (latest goes on bottom)
-- Always update the pyproject.toml version when you make PR
-- Never force push
-- Never merge PRs
-- Never delete branches
-- Never modify GitHub settings
-- Never act on repositories outside these organizations: {whitelisted_orgs}
-- Never create or delete repos
-- Never modify CI/CD config
-- Always commit with clear, descriptive messages
-- Always reply to PR messages directly once addressed
-- When creating a PR, write a clear title and description
-- When reviewing a PR, be thorough — check logic, edge cases, style, and tests
-- If a task is unclear, comment on the issue/PR asking for clarification rather than guessing
-- If you need to make changes, create a branch named agent0/{{short-description}}'''
-
-_MENTION_ISSUE = '''You were mentioned in a comment on issue #{number}: "{title}"
-
-Issue body:
-{issue_body}
-
-Conversation:
-{formatted_comments}
-
-The comment mentioning you:
-{trigger_text}
-
-Respond to what was asked of you. If it's a question, answer it by commenting on the \
-issue using `gh issue comment {number} --body "..."`. If it's a task, do the work and \
-comment with what you did.'''
-
-_MENTION_PR = '''You were mentioned in a comment on PR #{number}: "{title}"
-
-PR description:
-{pr_body}
-
-PR diff:
-{diff}
-
-Conversation:
-{formatted_comments}
-
-The comment mentioning you:
-{trigger_text}
-
-Respond to what was asked of you. Use `gh pr comment {number} --body "..."` to reply.'''
-
-_ASSIGNED_ISSUE = '''You have been assigned to issue #{number}: "{title}"
-
-Issue body:
-{issue_body}
-
-Labels: {labels}
-
-Conversation:
-{formatted_comments}
-
-Read the issue carefully. If the task is clear, do the work:
-1. Create a branch named agent0/{{short-description}}
-2. Implement the changes
-3. Commit and push
-4. Create a PR referencing this issue (use "Closes #{number}" in the PR body)
-5. Comment on the issue with a summary of what you did
-
-If the task is unclear or you need more information, comment on the issue asking for \
-clarification. Do not guess.'''
-
-_REVIEW_PR = '''You have been asked to review PR #{number}: "{title}"
-
-PR description:
-{pr_body}
-
-Source branch: {head_ref} -> Target branch: {base_ref}
-
-PR diff:
-{diff}
-
-Conversation:
-{formatted_comments}
-
-Review this PR thoroughly:
-1. Read the diff carefully
-2. Check the code in the repo for full context if needed
-3. Look for bugs, logic errors, edge cases, missing tests, style issues
-4. Submit your review using gh:
-   - If the code is good: `gh pr review {number} --approve --body "..."`
-   - If changes are needed: `gh pr review {number} --request-changes --body "..."`
-   - For minor comments: `gh pr review {number} --comment --body "..."`'''
-
-_CI_FAILURE = '''CI checks have failed on your PR #{number}: "{title}"
-
-Source branch: {head_ref} -> Target branch: {base_ref}
-
-Failed checks:
-{check_failures}
-
-PR diff:
-{diff}
-
-Conversation:
-{formatted_comments}
-
-Fix the failing checks:
-1. Read the failure output carefully to understand what went wrong
-2. Look at the relevant code in the repo for full context
-3. Fix the code on the current branch ({head_ref})
-4. Run the failing checks locally if possible to verify your fix
-5. Commit and push the fix
-6. Comment on the PR with what you fixed using `gh pr comment {number} --body "..."`'''
 
 
 @dataclass
@@ -177,7 +61,7 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
         str: Complete prompt with preamble and event-specific instructions
     '''
 
-    preamble = _PREAMBLE.format(
+    preamble = prompts.PREAMBLE.format(
         owner=context.owner,
         repo=context.repo,
         whitelisted_orgs=', '.join(config.whitelisted_orgs),
@@ -188,7 +72,7 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
 
     if context.event_type == 'mention':
         if context.subject_type == 'PullRequest':
-            body = _MENTION_PR.format(
+            body = prompts.MENTION_PR.format(
                 number=context.number,
                 title=title,
                 pr_body=context.issue_body or '(no description)',
@@ -197,7 +81,7 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
                 trigger_text=context.trigger_text,
             )
         else:
-            body = _MENTION_ISSUE.format(
+            body = prompts.MENTION_ISSUE.format(
                 number=context.number,
                 title=title,
                 issue_body=context.issue_body or '(no description)',
@@ -205,7 +89,7 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
                 trigger_text=context.trigger_text,
             )
     elif context.event_type == 'assignment':
-        body = _ASSIGNED_ISSUE.format(
+        body = prompts.ASSIGNED_ISSUE.format(
             number=context.number,
             title=title,
             issue_body=context.issue_body or '(no description)',
@@ -213,7 +97,7 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
             formatted_comments=formatted,
         )
     elif context.event_type == 'review_request':
-        body = _REVIEW_PR.format(
+        body = prompts.REVIEW_PR.format(
             number=context.number,
             title=title,
             pr_body=context.issue_body or '(no description)',
@@ -221,9 +105,12 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
             base_ref=context.base_ref or '(unknown)',
             diff=context.diff or '(no diff available)',
             formatted_comments=formatted,
+            owner=context.owner,
+            repo=context.repo,
+            github_user=config.github_user,
         )
     elif context.event_type == 'ci_failure':
-        body = _CI_FAILURE.format(
+        body = prompts.CI_FAILURE.format(
             number=context.number,
             title=context.issue_body[:100] if context.issue_body else '',
             head_ref=context.head_ref or '(unknown)',

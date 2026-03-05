@@ -78,6 +78,32 @@ class Scheduler:
 
         self._poller = poller
 
+    def has_task_for(self, owner: str, repo: str, number: int) -> bool:
+
+        '''
+        Check if a task for the same PR/issue is already running or queued.
+
+        Args:
+            owner (str): Repository owner
+            repo (str): Repository name
+            number (int): PR/issue number
+
+        Returns:
+            bool: True if a matching task exists
+        '''
+
+        repo_key = f'{owner}/{repo}'
+
+        running = self._running.get(repo_key)
+        if running and running.context.number == number:
+            return True
+
+        for queued_ctx in self._queued.get(repo_key, []):
+            if queued_ctx.number == number:
+                return True
+
+        return False
+
     def submit(self, context: TaskContext) -> asyncio.Task[None]:
 
         '''
@@ -383,8 +409,9 @@ class Daemon:
                         continue
 
                     reason = notification.get('reason', '')
-                    if reason != 'ci_activity' and is_self_triggered(context, self._config):
-                        log.debug('Skipping self-triggered notification')
+                    skip_self_check = reason in ('ci_activity', 'review_requested')
+                    if not skip_self_check and is_self_triggered(context, self._config):
+                        log.info('Skipping self-triggered notification for %s', reason)
                         try:
                             await self._poller.mark_read(notification.get('id', ''))
                         except Exception:
@@ -392,6 +419,16 @@ class Daemon:
                         continue
 
                     task = classify(notification, context, self._config)
+
+                    if self._scheduler.has_task_for(task.owner, task.repo, task.number):
+                        log.info(
+                            'Skipping duplicate task for %s/%s#%d (already running/queued)',
+                            task.owner,
+                            task.repo,
+                            task.number,
+                        )
+                        continue
+
                     self._scheduler.submit(task)
 
             except RateLimited as e:
