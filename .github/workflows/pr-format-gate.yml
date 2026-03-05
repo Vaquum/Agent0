@@ -1,11 +1,11 @@
-name: Format
+name: pr-format-gate
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  format:
+  pr-format-gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
