@@ -5,6 +5,7 @@ from typing import Any, Protocol
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 
+from agent0 import __version__
 from agent0.audit import read_entry_output, read_history
 from agent0.config import Config
 from agent0.logbuffer import LogBuffer
@@ -51,11 +52,11 @@ def create_app(
         FastAPI: Configured FastAPI application
     '''
 
-    app = FastAPI(title='Agent0', version='0.1.0')
+    app = FastAPI(title='Agent0', version=__version__)
 
     @app.get('/health')
     async def health() -> dict[str, str]:
-        return {'status': 'ok'}
+        return {'status': 'ok', 'version': __version__}
 
     @app.get('/api/tasks/running')
     async def running_tasks() -> list[dict[str, Any]]:
