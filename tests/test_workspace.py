@@ -23,6 +23,8 @@ def _make_config(tmp_path: Path) -> Config:
     return Config(
         github_token='ghp_test123',
         anthropic_api_key='test',
+        github_user='test-bot',
+        whitelisted_orgs=('testorg',),
         data_dir=tmp_path,
     )
 

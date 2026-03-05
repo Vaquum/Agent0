@@ -20,7 +20,7 @@ def _make_config() -> Config:
         Config: Test config
     '''
 
-    return Config(github_token='test', anthropic_api_key='test')
+    return Config(github_token='test', anthropic_api_key='test', github_user='test-bot', whitelisted_orgs=('testorg',))
 
 
 def _make_context(**overrides) -> TaskContext:
@@ -89,7 +89,7 @@ class TestBuildPrompt:
         ctx = _make_context()
         prompt = _build_prompt(ctx, config)
 
-        assert 'vaquum' in prompt
+        assert 'testorg' in prompt
 
     def test_mention_issue_prompt(self) -> None:
 

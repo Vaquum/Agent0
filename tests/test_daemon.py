@@ -9,7 +9,7 @@ from agent0.router import TaskContext
 
 
 def _make_config() -> Config:
-    return Config(github_token='test', anthropic_api_key='test')
+    return Config(github_token='test', anthropic_api_key='test', github_user='test-bot', whitelisted_orgs=('testorg',))
 
 
 def _make_context(owner: str = 'org', repo: str = 'repo', number: int = 1) -> TaskContext:

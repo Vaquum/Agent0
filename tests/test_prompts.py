@@ -89,6 +89,19 @@ class TestPromptsModule:
 
         assert 'Submit exactly ONE review' in prompts.REVIEW_PR
 
+    def test_review_pr_request_changes_requires_inline(self) -> None:
+
+        '''
+        Compute that REVIEW_PR enforces REQUEST_CHANGES only with inline comments.
+
+        Returns:
+            None
+        '''
+
+        assert 'REQUEST_CHANGES' in prompts.REVIEW_PR
+        assert 'requires inline comments' in prompts.REVIEW_PR.lower()
+        assert 'COMMENT' in prompts.REVIEW_PR
+
     def test_mention_issue_has_gh_issue_comment(self) -> None:
 
         '''

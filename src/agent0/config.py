@@ -16,15 +16,15 @@ class Config:
     Compute configuration from environment variables.
 
     Args:
-        github_token (str): PAT for zero-bang with repo and notifications scopes
+        github_token (str): PAT for Agent0 with repo and notifications scopes
         anthropic_api_key (str): API key for Claude Code
-        poll_interval (int): Seconds between notification polls
+        github_user (str): GitHub username for the agent
         whitelisted_orgs (tuple[str, ...]): Organizations to respond to
+        poll_interval (int): Seconds between notification polls
         executor_timeout (int): Max seconds per Claude Code session
         max_turns (int): Max agentic turns per Claude Code session
         log_level (str): Python logging level
         data_dir (Path): Root directory for persistent data
-        github_user (str): GitHub username for the agent
         port (int): Port for the web server
 
     Returns:
@@ -33,13 +33,13 @@ class Config:
 
     github_token: str
     anthropic_api_key: str
+    github_user: str
+    whitelisted_orgs: tuple[str, ...]
     poll_interval: int = 30
-    whitelisted_orgs: tuple[str, ...] = ('vaquum',)
     executor_timeout: int = 1800
     max_turns: int = 100
     log_level: str = 'INFO'
     data_dir: Path = Path('/data')
-    github_user: str = 'zero-bang'
     port: int = 9999
 
     @property
@@ -105,6 +105,7 @@ def load_config() -> Config:
 
     github_token = os.environ.get('GITHUB_TOKEN', '')
     anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    github_user = os.environ.get('GITHUB_USER', '')
 
     if not github_token:
         log.error('GITHUB_TOKEN environment variable is required')
@@ -114,16 +115,17 @@ def load_config() -> Config:
         log.error('ANTHROPIC_API_KEY environment variable is required')
         sys.exit(1)
 
+    if not github_user:
+        log.error('GITHUB_USER environment variable is required')
+        sys.exit(1)
+
     orgs_raw = os.environ.get('WHITELISTED_ORGS', '')
-    if orgs_raw:
-        whitelisted_orgs = tuple(org.strip() for org in orgs_raw.split(',') if org.strip())
-    else:
-        whitelisted_orgs = ('vaquum',)
+    whitelisted_orgs = tuple(org.strip() for org in orgs_raw.split(',') if org.strip())
 
     if not whitelisted_orgs:
         raise ValueError(
             'WHITELISTED_ORGS must contain at least one organization. '
-            'Set it to a comma-separated list of GitHub org names (e.g. WHITELISTED_ORGS=vaquum).'
+            'Set it to a comma-separated list of GitHub org names (e.g. WHITELISTED_ORGS=myorg).'
         )
 
     poll_interval = int(os.environ.get('POLL_INTERVAL', '30'))
@@ -132,17 +134,16 @@ def load_config() -> Config:
     log_level = os.environ.get('LOG_LEVEL', 'INFO')
     data_dir = Path(os.environ.get('DATA_DIR', '/data'))
     port = int(os.environ.get('PORT', '9999'))
-    github_user = os.environ.get('GITHUB_USER', 'zero-bang')
 
     return Config(
         github_token=github_token,
         anthropic_api_key=anthropic_api_key,
-        poll_interval=poll_interval,
+        github_user=github_user,
         whitelisted_orgs=whitelisted_orgs,
+        poll_interval=poll_interval,
         executor_timeout=executor_timeout,
         max_turns=max_turns,
         log_level=log_level,
         data_dir=data_dir,
         port=port,
-        github_user=github_user,
     )
