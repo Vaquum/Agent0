@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - 2026-03-05
+
+### Changed
+- `load_config` now raises `ValueError` at startup if `WHITELISTED_ORGS` resolves to an empty list, providing a clear error message instead of silently operating with no allowed organizations
+
 ## [0.1.1] - 2026-03-05
 
 ### Changed
