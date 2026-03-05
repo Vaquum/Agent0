@@ -62,7 +62,7 @@ async def _run() -> None:
         log_level=config.log_level.lower(),
     )
     server = uvicorn.Server(server_config)
-    server.install_signal_handlers = False
+    server.install_signal_handlers = False  # type: ignore[reportAttributeAccessIssue]
 
     shutdown_event = asyncio.Event()
 

@@ -53,6 +53,13 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["agent0"]
 
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+include = ["src/agent0"]
+venvPath = "."
+venv = ".venv"
+
 [tool.mypy]
 strict = true
 python_version = "3.12"
