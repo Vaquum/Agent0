@@ -61,9 +61,9 @@ async def _run() -> None:
         host='0.0.0.0',
         port=config.port,
         log_level=config.log_level.lower(),
-        install_signal_handlers=False,
     )
     server = uvicorn.Server(server_config)
+    server.install_signal_handlers = False
 
     shutdown_event = asyncio.Event()
 
