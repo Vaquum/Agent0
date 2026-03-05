@@ -120,6 +120,12 @@ def load_config() -> Config:
     else:
         whitelisted_orgs = ('vaquum',)
 
+    if not whitelisted_orgs:
+        raise ValueError(
+            'WHITELISTED_ORGS must contain at least one organization. '
+            'Set it to a comma-separated list of GitHub org names (e.g. WHITELISTED_ORGS=vaquum).'
+        )
+
     poll_interval = int(os.environ.get('POLL_INTERVAL', '30'))
     executor_timeout = int(os.environ.get('EXECUTOR_TIMEOUT', '1800'))
     max_turns = int(os.environ.get('MAX_TURNS', '100'))
