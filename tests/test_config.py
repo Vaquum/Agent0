@@ -6,15 +6,13 @@ from agent0.config import Config, load_config
 
 
 class TestLoadConfig:
-
     def test_missing_github_token_exits(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that missing GITHUB_TOKEN causes SystemExit.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.delenv('GITHUB_TOKEN', raising=False)
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'test-key')
@@ -22,13 +20,12 @@ class TestLoadConfig:
             load_config()
 
     def test_missing_anthropic_key_exits(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that missing ANTHROPIC_API_KEY causes SystemExit.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.setenv('GITHUB_TOKEN', 'test-token')
         monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
@@ -36,13 +33,12 @@ class TestLoadConfig:
             load_config()
 
     def test_missing_github_user_exits(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that missing GITHUB_USER causes SystemExit.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.setenv('GITHUB_TOKEN', 'test-token')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'test-key')
@@ -51,20 +47,18 @@ class TestLoadConfig:
             load_config()
 
     def test_defaults_applied(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that default values are applied correctly.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test123')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test123')
         monkeypatch.setenv('GITHUB_USER', 'my-bot')
         monkeypatch.setenv('WHITELISTED_ORGS', 'myorg')
-        for key in ('POLL_INTERVAL', 'EXECUTOR_TIMEOUT',
-                     'MAX_TURNS', 'LOG_LEVEL', 'DATA_DIR'):
+        for key in ('POLL_INTERVAL', 'EXECUTOR_TIMEOUT', 'MAX_TURNS', 'LOG_LEVEL', 'DATA_DIR'):
             monkeypatch.delenv(key, raising=False)
 
         config = load_config()
@@ -77,13 +71,12 @@ class TestLoadConfig:
         assert config.github_user == 'my-bot'
 
     def test_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that custom environment values are parsed correctly.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_custom')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-custom')
@@ -102,13 +95,12 @@ class TestLoadConfig:
         assert config.data_dir == Path('/tmp/agent0')
 
     def test_whitelisted_orgs_parsing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that whitespace in org list is handled correctly.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
@@ -119,33 +111,32 @@ class TestLoadConfig:
         assert config.whitelisted_orgs == ('org1', 'org2', 'org3')
 
     def test_empty_whitelisted_orgs_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
-
-        '''
+        """
         Compute that an empty WHITELISTED_ORGS raises ValueError.
 
         Returns:
             None
-        '''
+        """
 
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
         monkeypatch.setenv('GITHUB_USER', 'test-bot')
         monkeypatch.setenv('WHITELISTED_ORGS', ' , , ')
 
-        with pytest.raises(ValueError, match='WHITELISTED_ORGS must contain at least one organization'):
+        with pytest.raises(
+            ValueError, match='WHITELISTED_ORGS must contain at least one organization'
+        ):
             load_config()
 
 
 class TestConfig:
-
     def test_workspaces_dir(self) -> None:
-
-        '''
+        """
         Compute that workspaces_dir derives correctly from data_dir.
 
         Returns:
             None
-        '''
+        """
 
         config = Config(
             github_token='test',
@@ -157,13 +148,12 @@ class TestConfig:
         assert config.workspaces_dir == Path('/mydata/workspaces')
 
     def test_audit_dir(self) -> None:
-
-        '''
+        """
         Compute that audit_dir derives correctly from data_dir.
 
         Returns:
             None
-        '''
+        """
 
         config = Config(
             github_token='test',
@@ -175,13 +165,12 @@ class TestConfig:
         assert config.audit_dir == Path('/mydata/audit')
 
     def test_log_redacted_masks_secrets(self) -> None:
-
-        '''
+        """
         Compute that log_redacted masks sensitive values.
 
         Returns:
             None
-        '''
+        """
 
         config = Config(
             github_token='ghp_abcdef123456789',
@@ -196,13 +185,12 @@ class TestConfig:
         assert 'sk-a...' in redacted
 
     def test_log_redacted_short_secret(self) -> None:
-
-        '''
+        """
         Compute that log_redacted handles short secrets.
 
         Returns:
             None
-        '''
+        """
 
         config = Config(
             github_token='short',
@@ -216,13 +204,12 @@ class TestConfig:
         assert '****' in redacted
 
     def test_frozen(self) -> None:
-
-        '''
+        """
         Compute that Config is immutable.
 
         Returns:
             None
-        '''
+        """
 
         config = Config(
             github_token='test',

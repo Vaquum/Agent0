@@ -14,8 +14,7 @@ log = logging.getLogger(__name__)
 
 
 def _setup_logging(level: str) -> None:
-
-    '''
+    """
     Compute logging configuration.
 
     Args:
@@ -23,7 +22,7 @@ def _setup_logging(level: str) -> None:
 
     Returns:
         None
-    '''
+    """
 
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
@@ -32,13 +31,12 @@ def _setup_logging(level: str) -> None:
 
 
 async def _run() -> None:
-
-    '''
+    """
     Compute main async entry point: startup, server, poll loop, shutdown.
 
     Returns:
         None
-    '''
+    """
 
     config = load_config()
     _setup_logging(config.log_level)
@@ -56,6 +54,7 @@ async def _run() -> None:
     app = create_app(daemon, config, log_buffer)
 
     import uvicorn
+
     server_config = uvicorn.Config(
         app,
         host='0.0.0.0',
@@ -63,7 +62,7 @@ async def _run() -> None:
         log_level=config.log_level.lower(),
     )
     server = uvicorn.Server(server_config)
-    server.install_signal_handlers = False
+    server.install_signal_handlers = False  # type: ignore[reportAttributeAccessIssue]
 
     shutdown_event = asyncio.Event()
 
@@ -94,12 +93,11 @@ async def _run() -> None:
 
 
 def main() -> None:
-
-    '''
+    """
     Compute Agent0 startup sequence.
 
     Returns:
         None
-    '''
+    """
 
     asyncio.run(_run())

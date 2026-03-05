@@ -6,15 +6,14 @@ from pathlib import Path
 
 from agent0.config import Config
 
-__all__ = ['AuditEntry', 'log_entry', 'read_history', 'read_entry_output']
+__all__ = ['AuditEntry', 'log_entry', 'read_entry_output', 'read_history']
 
 log = logging.getLogger(__name__)
 
 
 @dataclass
 class AuditEntry:
-
-    '''
+    """
     Compute audit trail entry for a completed task.
 
     Args:
@@ -37,7 +36,7 @@ class AuditEntry:
 
     Returns:
         AuditEntry: Structured audit log entry
-    '''
+    """
 
     timestamp: str
     notification_id: str
@@ -58,8 +57,7 @@ class AuditEntry:
 
 
 def _date_from_timestamp(timestamp: str) -> str:
-
-    '''
+    """
     Compute date string from ISO 8601 timestamp.
 
     Args:
@@ -67,14 +65,13 @@ def _date_from_timestamp(timestamp: str) -> str:
 
     Returns:
         str: Date in YYYY-MM-DD format
-    '''
+    """
 
     return timestamp[:10]
 
 
 def _audit_file_path(config: Config, date: str) -> Path:
-
-    '''
+    """
     Compute audit file path for a given date.
 
     Args:
@@ -83,14 +80,13 @@ def _audit_file_path(config: Config, date: str) -> Path:
 
     Returns:
         Path: Absolute path to the audit JSONL file
-    '''
+    """
 
     return config.audit_dir / f'{date}.jsonl'
 
 
 async def log_entry(entry: AuditEntry, config: Config) -> None:
-
-    '''
+    """
     Compute audit log write by appending entry to daily JSONL file.
 
     Args:
@@ -99,7 +95,7 @@ async def log_entry(entry: AuditEntry, config: Config) -> None:
 
     Returns:
         None
-    '''
+    """
 
     date = _date_from_timestamp(entry.timestamp)
     file_path = _audit_file_path(config, date)
@@ -119,8 +115,7 @@ async def read_history(
     page: int = 1,
     per_page: int = 50,
 ) -> list[AuditEntry]:
-
-    '''
+    """
     Compute paginated audit history from JSONL files, newest first.
 
     Args:
@@ -130,7 +125,7 @@ async def read_history(
 
     Returns:
         list[AuditEntry]: Paginated list of audit entries
-    '''
+    """
 
     def _read() -> list[AuditEntry]:
         audit_dir = config.audit_dir
@@ -171,8 +166,7 @@ async def read_entry_output(
     notification_id: str,
     timestamp: str | None = None,
 ) -> list[str] | None:
-
-    '''
+    """
     Compute executor output lines for a specific audit entry.
 
     Args:
@@ -182,7 +176,7 @@ async def read_entry_output(
 
     Returns:
         list[str] | None: Executor output lines or None if not found
-    '''
+    """
 
     def _read() -> list[str] | None:
         audit_dir = config.audit_dir

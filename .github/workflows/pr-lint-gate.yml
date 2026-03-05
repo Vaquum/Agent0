@@ -1,0 +1,14 @@
+name: pr-lint-gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pr-lint-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: check src/ tests/

@@ -15,13 +15,12 @@ from agent0.poller import (
 
 
 def _make_config() -> Config:
-
-    '''
+    """
     Compute test configuration.
 
     Returns:
         Config: Test config with dummy tokens
-    '''
+    """
 
     return Config(
         github_token='test-token',
@@ -39,8 +38,7 @@ def _make_notification(
     subject_type: str = 'Issue',
     subject_url: str = 'https://api.github.com/repos/testorg/myrepo/issues/42',
 ) -> dict[str, Any]:
-
-    '''
+    """
     Compute test notification object.
 
     Args:
@@ -53,7 +51,7 @@ def _make_notification(
 
     Returns:
         dict[str, Any]: GitHub notification object
-    '''
+    """
 
     return {
         'id': notification_id,
@@ -74,67 +72,60 @@ def _make_notification(
 
 
 class TestExtractNumber:
-
     def test_issue_url(self) -> None:
-
-        '''
+        """
         Compute number extraction from issue URL.
 
         Returns:
             None
-        '''
+        """
 
         url = 'https://api.github.com/repos/owner/repo/issues/42'
         assert _extract_number_from_url(url) == 42
 
     def test_pull_url(self) -> None:
-
-        '''
+        """
         Compute number extraction from PR URL.
 
         Returns:
             None
-        '''
+        """
 
         url = 'https://api.github.com/repos/owner/repo/pulls/99'
         assert _extract_number_from_url(url) == 99
 
     def test_trailing_slash(self) -> None:
-
-        '''
+        """
         Compute number extraction with trailing slash.
 
         Returns:
             None
-        '''
+        """
 
         url = 'https://api.github.com/repos/owner/repo/issues/7/'
         assert _extract_number_from_url(url) == 7
 
     def test_no_number_returns_zero(self) -> None:
-
-        '''
+        """
         Compute fallback when no number found.
 
         Returns:
             None
-        '''
+        """
 
         url = 'https://api.github.com/repos/owner/repo'
         assert _extract_number_from_url(url) == 0
 
 
 class TestPoller:
-
     @pytest.mark.asyncio
     async def test_filters_non_whitelisted_orgs(self) -> None:
-
-        '''
+        """
         Compute that notifications from non-whitelisted orgs are dropped.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
 
@@ -158,13 +149,12 @@ class TestPoller:
 
     @pytest.mark.asyncio
     async def test_deduplication(self) -> None:
-
-        '''
+        """
         Compute that already-processed notifications are skipped.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         notifications = [_make_notification(notification_id='1')]
@@ -184,13 +174,12 @@ class TestPoller:
 
     @pytest.mark.asyncio
     async def test_304_returns_empty(self) -> None:
-
-        '''
+        """
         Compute that 304 Not Modified returns empty list.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
 
@@ -206,13 +195,12 @@ class TestPoller:
 
     @pytest.mark.asyncio
     async def test_429_raises_rate_limited(self) -> None:
-
-        '''
+        """
         Compute that 429 response raises RateLimited with retry_after.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
 
@@ -229,13 +217,12 @@ class TestPoller:
 
     @pytest.mark.asyncio
     async def test_case_insensitive_org_filter(self) -> None:
-
-        '''
+        """
         Compute that org filtering is case-insensitive.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
 
@@ -254,15 +241,13 @@ class TestPoller:
 
 
 class TestReviewsToComments:
-
     def test_converts_reviews_to_comments(self) -> None:
-
-        '''
+        """
         Compute that reviews with bodies are converted to comment-shaped dicts.
 
         Returns:
             None
-        '''
+        """
 
         reviews = [
             {
@@ -280,13 +265,12 @@ class TestReviewsToComments:
         assert result[0]['created_at'] == '2026-03-01T19:18:05Z'
 
     def test_skips_empty_body_reviews(self) -> None:
-
-        '''
+        """
         Compute that reviews with empty bodies are excluded.
 
         Returns:
             None
-        '''
+        """
 
         reviews = [
             {
@@ -306,13 +290,12 @@ class TestReviewsToComments:
         assert len(result) == 0
 
     def test_multiple_reviews(self) -> None:
-
-        '''
+        """
         Compute that multiple reviews with bodies are all included.
 
         Returns:
             None
-        '''
+        """
 
         reviews = [
             {
@@ -335,15 +318,13 @@ class TestReviewsToComments:
 
 
 class TestFormatCheckFailures:
-
     def test_failed_runs(self) -> None:
-
-        '''
+        """
         Compute that failed check runs are formatted with name and output.
 
         Returns:
             None
-        '''
+        """
 
         check_runs = [
             {
@@ -370,13 +351,12 @@ class TestFormatCheckFailures:
         assert 'tests' not in result
 
     def test_no_failures(self) -> None:
-
-        '''
+        """
         Compute that all-success runs return placeholder.
 
         Returns:
             None
-        '''
+        """
 
         check_runs = [
             {'name': 'tests', 'conclusion': 'success', 'output': {}},
@@ -385,25 +365,23 @@ class TestFormatCheckFailures:
         assert result == '(no failed check details available)'
 
     def test_empty_runs(self) -> None:
-
-        '''
+        """
         Compute that empty list returns placeholder.
 
         Returns:
             None
-        '''
+        """
 
         result = _format_check_failures([])
         assert result == '(no failed check details available)'
 
     def test_timed_out_included(self) -> None:
-
-        '''
+        """
         Compute that timed_out conclusion is included in failures.
 
         Returns:
             None
-        '''
+        """
 
         check_runs = [
             {

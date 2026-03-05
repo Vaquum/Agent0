@@ -11,8 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class WorkspaceManager:
-
-    '''
+    """
     Compute workspace state for repository clones on persistent disk.
 
     Args:
@@ -20,14 +19,13 @@ class WorkspaceManager:
 
     Returns:
         WorkspaceManager: Manager for repo workspace lifecycle
-    '''
+    """
 
     def __init__(self, config: Config) -> None:
         self._config = config
 
     def _workspace_path(self, owner: str, repo: str) -> Path:
-
-        '''
+        """
         Compute filesystem path for a repo workspace.
 
         Args:
@@ -36,13 +34,12 @@ class WorkspaceManager:
 
         Returns:
             Path: Absolute path to the workspace directory
-        '''
+        """
 
         return self._config.workspaces_dir / owner / repo
 
     def _clone_url(self, owner: str, repo: str) -> str:
-
-        '''
+        """
         Compute clone URL with embedded token for authentication.
 
         Args:
@@ -51,7 +48,7 @@ class WorkspaceManager:
 
         Returns:
             str: HTTPS clone URL with token
-        '''
+        """
 
         return f'https://x-access-token:{self._config.github_token}@github.com/{owner}/{repo}.git'
 
@@ -60,8 +57,7 @@ class WorkspaceManager:
         args: list[str],
         cwd: Path | None = None,
     ) -> tuple[int, str, str]:
-
-        '''
+        """
         Compute result of a git subprocess execution.
 
         Args:
@@ -70,9 +66,9 @@ class WorkspaceManager:
 
         Returns:
             tuple[int, str, str]: Return code, stdout, stderr
-        '''
+        """
 
-        cmd = ['git'] + args
+        cmd = ['git', *args]
         log.debug('Running: %s (cwd=%s)', ' '.join(cmd), cwd)
 
         process = await asyncio.create_subprocess_exec(
@@ -89,8 +85,7 @@ class WorkspaceManager:
         )
 
     async def prepare(self, owner: str, repo: str) -> Path:
-
-        '''
+        """
         Compute a clean workspace ready for use.
 
         Clones the repo if not present. If already cloned, fetches latest
@@ -102,7 +97,7 @@ class WorkspaceManager:
 
         Returns:
             Path: Path to the prepared workspace directory
-        '''
+        """
 
         workspace = self._workspace_path(owner, repo)
 
@@ -110,7 +105,7 @@ class WorkspaceManager:
             log.info('Cloning %s/%s', owner, repo)
             workspace.parent.mkdir(parents=True, exist_ok=True)
 
-            returncode, stdout, stderr = await self._run_git(
+            returncode, _stdout, stderr = await self._run_git(
                 ['clone', self._clone_url(owner, repo), str(workspace)],
             )
             if returncode != 0:
@@ -162,8 +157,7 @@ class WorkspaceManager:
         return workspace
 
     async def cleanup_stale(self, max_age_days: int = 7) -> list[str]:
-
-        '''
+        """
         Compute and remove workspace directories not accessed recently.
 
         Args:
@@ -171,7 +165,7 @@ class WorkspaceManager:
 
         Returns:
             list[str]: List of removed workspace paths as owner/repo strings
-        '''
+        """
 
         removed: list[str] = []
         workspaces_dir = self._config.workspaces_dir
@@ -202,6 +196,7 @@ class WorkspaceManager:
 
                     def _remove_tree(path: Path) -> None:
                         import shutil
+
                         shutil.rmtree(path)
 
                     await asyncio.to_thread(_remove_tree, repo_dir)

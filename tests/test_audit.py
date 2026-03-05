@@ -8,8 +8,7 @@ from agent0.config import Config
 
 
 def _make_config(tmp_path: Path) -> Config:
-
-    '''
+    """
     Compute test config with tmp_path as data directory.
 
     Args:
@@ -17,7 +16,7 @@ def _make_config(tmp_path: Path) -> Config:
 
     Returns:
         Config: Test configuration
-    '''
+    """
 
     return Config(
         github_token='test',
@@ -33,8 +32,7 @@ def _make_entry(
     notification_id: str = '123',
     status: str = 'success',
 ) -> AuditEntry:
-
-    '''
+    """
     Compute test audit entry with sensible defaults.
 
     Args:
@@ -44,7 +42,7 @@ def _make_entry(
 
     Returns:
         AuditEntry: Test audit entry
-    '''
+    """
 
     return AuditEntry(
         timestamp=timestamp,
@@ -66,16 +64,14 @@ def _make_entry(
 
 
 class TestLogEntry:
-
     @pytest.mark.asyncio
     async def test_creates_file_and_writes(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that log_entry creates the audit file and writes a valid JSON line.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         entry = _make_entry()
@@ -91,13 +87,12 @@ class TestLogEntry:
 
     @pytest.mark.asyncio
     async def test_appends_to_existing_file(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that log_entry appends to an existing audit file.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         entry1 = _make_entry(notification_id='100')
@@ -113,13 +108,12 @@ class TestLogEntry:
 
     @pytest.mark.asyncio
     async def test_different_dates_separate_files(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that entries with different dates go to different files.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         entry1 = _make_entry(timestamp='2026-02-27T10:00:00Z')
@@ -132,16 +126,14 @@ class TestLogEntry:
 
 
 class TestReadHistory:
-
     @pytest.mark.asyncio
     async def test_empty_directory(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_history returns empty list when no audit files exist.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         result = await read_history(config)
@@ -149,13 +141,12 @@ class TestReadHistory:
 
     @pytest.mark.asyncio
     async def test_returns_newest_first(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_history returns entries newest first.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         await log_entry(_make_entry(timestamp='2026-02-27T10:00:00Z', notification_id='1'), config)
@@ -168,13 +159,12 @@ class TestReadHistory:
 
     @pytest.mark.asyncio
     async def test_pagination(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_history paginates correctly.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         for i in range(5):
@@ -202,13 +192,12 @@ class TestReadHistory:
 
     @pytest.mark.asyncio
     async def test_malformed_lines_skipped(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that malformed JSON lines are skipped gracefully.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         await log_entry(_make_entry(notification_id='good'), config)
@@ -223,16 +212,14 @@ class TestReadHistory:
 
 
 class TestReadEntryOutput:
-
     @pytest.mark.asyncio
     async def test_returns_output_lines(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_entry_output returns stored executor output.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         entry = _make_entry(notification_id='abc')
@@ -248,13 +235,12 @@ class TestReadEntryOutput:
 
     @pytest.mark.asyncio
     async def test_returns_none_for_missing(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_entry_output returns None for unknown notification.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         await log_entry(_make_entry(notification_id='existing'), config)
@@ -265,13 +251,12 @@ class TestReadEntryOutput:
 
     @pytest.mark.asyncio
     async def test_returns_none_for_entry_without_output(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_entry_output returns None for entry without executor_output.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         entry = _make_entry(notification_id='no-output')
@@ -283,13 +268,12 @@ class TestReadEntryOutput:
 
     @pytest.mark.asyncio
     async def test_empty_audit_dir(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that read_entry_output returns None when audit dir is empty.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
 

@@ -14,8 +14,7 @@ CHECK_FAILURE_TRUNCATION_LIMIT = 50_000
 
 
 class RateLimited(Exception):
-
-    '''
+    """
     Compute rate limit exception with retry-after duration.
 
     Args:
@@ -23,11 +22,10 @@ class RateLimited(Exception):
 
     Returns:
         RateLimited: Exception indicating GitHub API rate limit hit
-    '''
+    """
 
     def __init__(self, retry_after: int) -> None:
-
-        '''
+        """
         Compute RateLimited exception.
 
         Args:
@@ -35,15 +33,14 @@ class RateLimited(Exception):
 
         Returns:
             None
-        '''
+        """
 
         super().__init__(f'Rate limited, retry after {retry_after}s')
         self.retry_after = retry_after
 
 
 class GitHubClient:
-
-    '''
+    """
     Compute GitHub REST API interactions via async httpx.
 
     Args:
@@ -51,11 +48,10 @@ class GitHubClient:
 
     Returns:
         GitHubClient: Async GitHub API client
-    '''
+    """
 
     def __init__(self, token: str) -> None:
-
-        '''
+        """
         Compute GitHubClient instance.
 
         Args:
@@ -63,7 +59,7 @@ class GitHubClient:
 
         Returns:
             None
-        '''
+        """
 
         self._client = httpx.AsyncClient(
             base_url='https://api.github.com',
@@ -76,13 +72,12 @@ class GitHubClient:
         )
 
     async def get_authenticated_user(self) -> dict[str, Any]:
-
-        '''
+        """
         Compute authenticated user info.
 
         Returns:
             dict[str, Any]: GitHub user object
-        '''
+        """
 
         response = await self._client.get('/user')
         response.raise_for_status()
@@ -93,8 +88,7 @@ class GitHubClient:
         since: str | None = None,
         if_modified_since: str | None = None,
     ) -> tuple[list[dict[str, Any]], str | None]:
-
-        '''
+        """
         Compute unread participating notifications.
 
         Args:
@@ -103,7 +97,7 @@ class GitHubClient:
 
         Returns:
             tuple[list[dict[str, Any]], str | None]: Notifications and Last-Modified header
-        '''
+        """
 
         params: dict[str, str] = {
             'all': 'false',
@@ -135,8 +129,7 @@ class GitHubClient:
         return cast(list[dict[str, Any]], payload), last_modified
 
     async def mark_notification_read(self, thread_id: str) -> None:
-
-        '''
+        """
         Compute notification read status update.
 
         Args:
@@ -144,14 +137,13 @@ class GitHubClient:
 
         Returns:
             None
-        '''
+        """
 
         response = await self._client.patch(f'/notifications/threads/{thread_id}')
         response.raise_for_status()
 
     async def get_issue(self, owner: str, repo: str, number: int) -> dict[str, Any]:
-
-        '''
+        """
         Compute issue details.
 
         Args:
@@ -161,17 +153,19 @@ class GitHubClient:
 
         Returns:
             dict[str, Any]: Issue object
-        '''
+        """
 
         response = await self._client.get(f'/repos/{owner}/{repo}/issues/{number}')
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
 
     async def get_issue_comments(
-        self, owner: str, repo: str, number: int,
+        self,
+        owner: str,
+        repo: str,
+        number: int,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute issue comments.
 
         Args:
@@ -181,15 +175,14 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: List of comment objects
-        '''
+        """
 
         response = await self._client.get(f'/repos/{owner}/{repo}/issues/{number}/comments')
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
 
     async def get_pull_request(self, owner: str, repo: str, number: int) -> dict[str, Any]:
-
-        '''
+        """
         Compute pull request details.
 
         Args:
@@ -199,15 +192,14 @@ class GitHubClient:
 
         Returns:
             dict[str, Any]: Pull request object
-        '''
+        """
 
         response = await self._client.get(f'/repos/{owner}/{repo}/pulls/{number}')
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
 
     async def get_pull_request_diff(self, owner: str, repo: str, number: int) -> str:
-
-        '''
+        """
         Compute pull request diff as raw text.
 
         Args:
@@ -217,7 +209,7 @@ class GitHubClient:
 
         Returns:
             str: Raw diff text
-        '''
+        """
 
         response = await self._client.get(
             f'/repos/{owner}/{repo}/pulls/{number}',
@@ -227,10 +219,12 @@ class GitHubClient:
         return response.text
 
     async def get_pull_request_comments(
-        self, owner: str, repo: str, number: int,
+        self,
+        owner: str,
+        repo: str,
+        number: int,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute pull request review comments.
 
         Args:
@@ -240,17 +234,19 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: List of review comment objects
-        '''
+        """
 
         response = await self._client.get(f'/repos/{owner}/{repo}/pulls/{number}/comments')
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
 
     async def get_pull_request_reviews(
-        self, owner: str, repo: str, number: int,
+        self,
+        owner: str,
+        repo: str,
+        number: int,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute pull request reviews.
 
         Args:
@@ -260,15 +256,14 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: List of review objects
-        '''
+        """
 
         response = await self._client.get(f'/repos/{owner}/{repo}/pulls/{number}/reviews')
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
 
     async def get_comment(self, owner: str, repo: str, comment_id: int) -> dict[str, Any]:
-
-        '''
+        """
         Compute a specific issue comment.
 
         Args:
@@ -278,7 +273,7 @@ class GitHubClient:
 
         Returns:
             dict[str, Any]: Comment object
-        '''
+        """
 
         response = await self._client.get(
             f'/repos/{owner}/{repo}/issues/comments/{comment_id}',
@@ -287,10 +282,12 @@ class GitHubClient:
         return response.json()  # type: ignore[no-any-return]
 
     async def get_check_suite(
-        self, owner: str, repo: str, check_suite_id: int,
+        self,
+        owner: str,
+        repo: str,
+        check_suite_id: int,
     ) -> dict[str, Any]:
-
-        '''
+        """
         Compute check suite details.
 
         Args:
@@ -300,7 +297,7 @@ class GitHubClient:
 
         Returns:
             dict[str, Any]: Check suite object
-        '''
+        """
 
         response = await self._client.get(
             f'/repos/{owner}/{repo}/check-suites/{check_suite_id}',
@@ -309,10 +306,12 @@ class GitHubClient:
         return response.json()  # type: ignore[no-any-return]
 
     async def get_check_runs_for_suite(
-        self, owner: str, repo: str, check_suite_id: int,
+        self,
+        owner: str,
+        repo: str,
+        check_suite_id: int,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute check runs belonging to a check suite.
 
         Args:
@@ -322,7 +321,7 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: List of check run objects
-        '''
+        """
 
         response = await self._client.get(
             f'/repos/{owner}/{repo}/check-suites/{check_suite_id}/check-runs',
@@ -332,10 +331,12 @@ class GitHubClient:
         return data.get('check_runs', [])  # type: ignore[no-any-return]
 
     async def get_pull_requests_for_commit(
-        self, owner: str, repo: str, sha: str,
+        self,
+        owner: str,
+        repo: str,
+        sha: str,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute pull requests associated with a commit SHA.
 
         Args:
@@ -345,7 +346,7 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: List of pull request objects
-        '''
+        """
 
         response = await self._client.get(
             f'/repos/{owner}/{repo}/commits/{sha}/pulls',
@@ -354,10 +355,11 @@ class GitHubClient:
         return response.json()  # type: ignore[no-any-return]
 
     async def search_open_prs_by_author(
-        self, author: str, org: str,
+        self,
+        author: str,
+        org: str,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute open PRs authored by a user within an organization.
 
         Args:
@@ -366,7 +368,7 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: Search result items (issue-like objects)
-        '''
+        """
 
         response = await self._client.get(
             '/search/issues',
@@ -379,10 +381,12 @@ class GitHubClient:
         return data.get('items', [])  # type: ignore[no-any-return]
 
     async def get_check_suites_for_ref(
-        self, owner: str, repo: str, ref: str,
+        self,
+        owner: str,
+        repo: str,
+        ref: str,
     ) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute check suites for a commit reference.
 
         Args:
@@ -392,7 +396,7 @@ class GitHubClient:
 
         Returns:
             list[dict[str, Any]]: List of check suite objects
-        '''
+        """
 
         response = await self._client.get(
             f'/repos/{owner}/{repo}/commits/{ref}/check-suites',
@@ -402,20 +406,18 @@ class GitHubClient:
         return data.get('check_suites', [])  # type: ignore[no-any-return]
 
     async def close(self) -> None:
-
-        '''
+        """
         Compute client shutdown.
 
         Returns:
             None
-        '''
+        """
 
         await self._client.aclose()
 
 
 class Poller:
-
-    '''
+    """
     Compute GitHub notification polling with filtering and context fetching.
 
     Args:
@@ -424,11 +426,10 @@ class Poller:
 
     Returns:
         Poller: Notification poller instance
-    '''
+    """
 
     def __init__(self, client: GitHubClient, config: Config) -> None:
-
-        '''
+        """
         Compute Poller instance.
 
         Args:
@@ -437,7 +438,7 @@ class Poller:
 
         Returns:
             None
-        '''
+        """
 
         self._client = client
         self._config = config
@@ -447,8 +448,7 @@ class Poller:
         self._ci_checked: dict[str, str] = {}
 
     async def poll(self) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute unread actionable notifications from GitHub.
 
         Resets the If-Modified-Since cache every 10 polls to avoid
@@ -456,7 +456,7 @@ class Poller:
 
         Returns:
             list[dict[str, Any]]: Filtered notification objects
-        '''
+        """
 
         FRESH_POLL_INTERVAL = 10
 
@@ -502,8 +502,7 @@ class Poller:
         return result
 
     async def mark_read(self, thread_id: str) -> None:
-
-        '''
+        """
         Compute notification read status update.
 
         Args:
@@ -511,13 +510,12 @@ class Poller:
 
         Returns:
             None
-        '''
+        """
 
         await self._client.mark_notification_read(thread_id)
 
     async def scan_ci_failures(self) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute synthetic notifications for CI failures on agent-authored open PRs.
 
         Searches for open PRs by the agent across whitelisted orgs, checks
@@ -526,7 +524,7 @@ class Poller:
 
         Returns:
             list[dict[str, Any]]: Synthetic notification objects for failed CI checks
-        '''
+        """
 
         results: list[dict[str, Any]] = []
         current_keys: set[str] = set()
@@ -534,7 +532,8 @@ class Poller:
         for org in self._config.whitelisted_orgs:
             try:
                 items = await self._client.search_open_prs_by_author(
-                    self._config.github_user, org,
+                    self._config.github_user,
+                    org,
                 )
             except Exception:
                 log.debug('CI scan: search failed for org %s', org)
@@ -564,7 +563,9 @@ class Poller:
 
                 try:
                     suites = await self._client.get_check_suites_for_ref(
-                        owner, repo, head_sha,
+                        owner,
+                        repo,
+                        head_sha,
                     )
                 except Exception:
                     continue
@@ -572,9 +573,7 @@ class Poller:
                 if not suites:
                     continue
 
-                all_completed = all(
-                    s.get('status') == 'completed' for s in suites
-                )
+                all_completed = all(s.get('status') == 'completed' for s in suites)
                 if not all_completed:
                     continue
 
@@ -587,19 +586,21 @@ class Poller:
                 suite_id = failed[0].get('id', 0)
                 log.info('CI scan: found failure on %s (suite %d)', key, suite_id)
 
-                results.append({
-                    'id': f'ci-scan-{suite_id}',
-                    'reason': 'ci_activity',
-                    'subject': {
-                        'type': 'CheckSuite',
-                        'url': f'https://api.github.com/repos/{owner}/{repo}/check-suites/{suite_id}',
-                    },
-                    'repository': {
-                        'full_name': f'{owner}/{repo}',
-                        'owner': {'login': owner},
-                    },
-                    'updated_at': pr.get('updated_at', ''),
-                })
+                results.append(
+                    {
+                        'id': f'ci-scan-{suite_id}',
+                        'reason': 'ci_activity',
+                        'subject': {
+                            'type': 'CheckSuite',
+                            'url': f'https://api.github.com/repos/{owner}/{repo}/check-suites/{suite_id}',
+                        },
+                        'repository': {
+                            'full_name': f'{owner}/{repo}',
+                            'owner': {'login': owner},
+                        },
+                        'updated_at': pr.get('updated_at', ''),
+                    }
+                )
 
         stale = set(self._ci_checked) - current_keys
         for k in stale:
@@ -608,8 +609,7 @@ class Poller:
         return results
 
     async def fetch_context(self, notification: dict[str, Any]) -> dict[str, Any]:
-
-        '''
+        """
         Compute full context for a notification by fetching issue/PR details.
 
         Args:
@@ -617,7 +617,7 @@ class Poller:
 
         Returns:
             dict[str, Any]: Context dict with issue/PR body, comments, diff, actor info
-        '''
+        """
 
         subject = notification.get('subject', {})
         subject_type = subject.get('type', '')
@@ -685,8 +685,7 @@ class Poller:
         repo: str,
         check_suite_id: int,
     ) -> dict[str, Any]:
-
-        '''
+        """
         Compute context for a CheckSuite notification by resolving the associated PR.
 
         Args:
@@ -697,7 +696,7 @@ class Poller:
 
         Returns:
             dict[str, Any]: Full context with PR details and check failure summaries
-        '''
+        """
 
         suite = await self._client.get_check_suite(owner, repo, check_suite_id)
         conclusion = suite.get('conclusion', '')
@@ -725,7 +724,8 @@ class Poller:
         if head_sha != pr_head_sha:
             log.debug(
                 'CheckSuite SHA %s does not match PR head %s, skipping',
-                head_sha[:8], pr_head_sha[:8],
+                head_sha[:8],
+                pr_head_sha[:8],
             )
             context['skip'] = True
             return context
@@ -764,8 +764,7 @@ class Poller:
 
 
 def _reviews_to_comments(reviews: list[dict[str, Any]]) -> list[dict[str, Any]]:
-
-    '''
+    """
     Compute comment-shaped dicts from pull request review objects.
 
     Args:
@@ -773,7 +772,7 @@ def _reviews_to_comments(reviews: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     Returns:
         list[dict[str, Any]]: Comment-compatible dicts with user, body, created_at
-    '''
+    """
 
     result: list[dict[str, Any]] = []
     for review in reviews:
@@ -781,17 +780,18 @@ def _reviews_to_comments(reviews: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not body.strip():
             continue
         state = review.get('state', '')
-        result.append({
-            'user': review.get('user', {}),
-            'body': f'[{state}] {body}',
-            'created_at': review.get('submitted_at', ''),
-        })
+        result.append(
+            {
+                'user': review.get('user', {}),
+                'body': f'[{state}] {body}',
+                'created_at': review.get('submitted_at', ''),
+            }
+        )
     return result
 
 
 def _extract_number_from_url(url: str) -> int:
-
-    '''
+    """
     Compute issue/PR number from GitHub API URL.
 
     Args:
@@ -799,7 +799,7 @@ def _extract_number_from_url(url: str) -> int:
 
     Returns:
         int: The issue or PR number
-    '''
+    """
 
     parts = url.rstrip('/').split('/')
     for part in reversed(parts):
@@ -809,8 +809,7 @@ def _extract_number_from_url(url: str) -> int:
 
 
 def _format_check_failures(check_runs: list[dict[str, Any]]) -> str:
-
-    '''
+    """
     Compute human-readable summary of failed check runs.
 
     Args:
@@ -818,7 +817,7 @@ def _format_check_failures(check_runs: list[dict[str, Any]]) -> str:
 
     Returns:
         str: Formatted failure summary with check names and output
-    '''
+    """
 
     parts: list[str] = []
     total_len = 0

@@ -1,23 +1,27 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agent0.config import Config
 
-__all__ = ['TaskContext', 'should_process', 'classify']
+__all__ = ['TaskContext', 'classify', 'should_process']
 
 log = logging.getLogger(__name__)
 
 ACTIONABLE_REASONS = {
-    'mention', 'assign', 'review_requested', 'ci_activity', 'author', 'comment',
+    'mention',
+    'assign',
+    'review_requested',
+    'ci_activity',
+    'author',
+    'comment',
 }
 
 
 @dataclass
 class TaskContext:
-
-    '''
+    """
     Compute structured task context from a GitHub notification.
 
     Args:
@@ -38,7 +42,7 @@ class TaskContext:
 
     Returns:
         TaskContext: Structured context for the executor
-    '''
+    """
 
     event_type: str
     owner: str
@@ -57,8 +61,7 @@ class TaskContext:
 
 
 def should_process(notification: dict[str, Any], config: Config) -> bool:
-
-    '''
+    """
     Compute whether a notification should be processed.
 
     Args:
@@ -67,7 +70,7 @@ def should_process(notification: dict[str, Any], config: Config) -> bool:
 
     Returns:
         bool: True if the notification is actionable
-    '''
+    """
 
     reason = notification.get('reason', '')
     subject_title = notification.get('subject', {}).get('title', '')
@@ -83,8 +86,7 @@ def classify(
     context: dict[str, Any],
     config: Config,
 ) -> TaskContext:
-
-    '''
+    """
     Compute TaskContext from notification and fetched context.
 
     Args:
@@ -94,7 +96,7 @@ def classify(
 
     Returns:
         TaskContext: Structured task context for the executor
-    '''
+    """
 
     reason = notification.get('reason', '')
     event_type = _reason_to_event_type(reason)
@@ -121,8 +123,7 @@ def classify(
 
 
 def is_self_triggered(context: dict[str, Any], config: Config) -> bool:
-
-    '''
+    """
     Compute whether the notification was triggered by the agent itself.
 
     Args:
@@ -131,15 +132,14 @@ def is_self_triggered(context: dict[str, Any], config: Config) -> bool:
 
     Returns:
         bool: True if the agent triggered this notification
-    '''
+    """
 
     actor = _as_str(context.get('actor', ''))
     return actor.lower() == config.github_user.lower()
 
 
 def format_comments(comments: list[dict[str, Any]]) -> str:
-
-    '''
+    """
     Compute formatted conversation thread from comment objects.
 
     Args:
@@ -147,13 +147,13 @@ def format_comments(comments: list[dict[str, Any]]) -> str:
 
     Returns:
         str: Formatted conversation thread
-    '''
+    """
 
     if not comments:
         return '(no comments)'
 
     parts: list[str] = []
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     for comment in comments:
         user = comment.get('user', {}).get('login', 'unknown')
@@ -167,8 +167,7 @@ def format_comments(comments: list[dict[str, Any]]) -> str:
 
 
 def _reason_to_event_type(reason: str) -> str:
-
-    '''
+    """
     Compute event type from notification reason.
 
     Args:
@@ -176,7 +175,7 @@ def _reason_to_event_type(reason: str) -> str:
 
     Returns:
         str: Normalized event type
-    '''
+    """
 
     mapping = {
         'mention': 'mention',
@@ -194,8 +193,7 @@ def _extract_trigger_text(
     context: dict[str, Any],
     config: Config,
 ) -> str:
-
-    '''
+    """
     Compute trigger text from the notification context.
 
     Args:
@@ -205,14 +203,12 @@ def _extract_trigger_text(
 
     Returns:
         str: The text that triggered the notification
-    '''
+    """
 
     reason = notification.get('reason', '')
     comments_raw = context.get('comments', [])
     comments = (
-        [c for c in comments_raw if isinstance(c, dict)]
-        if isinstance(comments_raw, list)
-        else []
+        [c for c in comments_raw if isinstance(c, dict)] if isinstance(comments_raw, list) else []
     )
 
     if reason == 'mention' and comments:
@@ -241,8 +237,7 @@ def _extract_trigger_text(
 
 
 def _as_str(value: Any) -> str:
-
-    '''
+    """
     Compute a safe string from an untyped value.
 
     Args:
@@ -250,14 +245,13 @@ def _as_str(value: Any) -> str:
 
     Returns:
         str: The value if already a string, otherwise empty string
-    '''
+    """
 
     return value if isinstance(value, str) else ''
 
 
 def _subject_title(notification: dict[str, Any]) -> str:
-
-    '''
+    """
     Compute subject title from a GitHub notification dict.
 
     Args:
@@ -265,7 +259,7 @@ def _subject_title(notification: dict[str, Any]) -> str:
 
     Returns:
         str: Subject title or empty string
-    '''
+    """
 
     subject = notification.get('subject', {})
     if not isinstance(subject, dict):
@@ -274,8 +268,7 @@ def _subject_title(notification: dict[str, Any]) -> str:
 
 
 def _format_timestamp(iso_timestamp: str, now: datetime) -> str:
-
-    '''
+    """
     Compute human-readable timestamp.
 
     Args:
@@ -284,7 +277,7 @@ def _format_timestamp(iso_timestamp: str, now: datetime) -> str:
 
     Returns:
         str: Formatted timestamp - relative if recent, absolute if older
-    '''
+    """
 
     if not iso_timestamp:
         return 'unknown time'

@@ -1,7 +1,7 @@
 import logging
 import threading
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ['LogBuffer']
@@ -15,8 +15,7 @@ LEVEL_VALUES = {
 
 
 class LogBuffer(logging.Handler):
-
-    '''
+    """
     Compute in-memory ring buffer of recent log records for API exposure.
 
     Args:
@@ -24,7 +23,7 @@ class LogBuffer(logging.Handler):
 
     Returns:
         LogBuffer: Logging handler with queryable buffer
-    '''
+    """
 
     def __init__(self, maxlen: int = 1000) -> None:
         super().__init__()
@@ -33,8 +32,7 @@ class LogBuffer(logging.Handler):
         self._lock = threading.Lock()
 
     def emit(self, record: logging.LogRecord) -> None:
-
-        '''
+        """
         Compute log entry from record and append to buffer.
 
         Args:
@@ -42,25 +40,26 @@ class LogBuffer(logging.Handler):
 
         Returns:
             None
-        '''
+        """
 
         with self._lock:
             self._counter += 1
-            self._buffer.append({
-                'id': self._counter,
-                'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
-                'level': record.levelname,
-                'logger': record.name,
-                'message': self.format(record) if self.formatter else record.getMessage(),
-            })
+            self._buffer.append(
+                {
+                    'id': self._counter,
+                    'timestamp': datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S'),
+                    'level': record.levelname,
+                    'logger': record.name,
+                    'message': self.format(record) if self.formatter else record.getMessage(),
+                }
+            )
 
     def get_entries(
         self,
         after: int = 0,
         level: str = 'DEBUG',
     ) -> dict[str, Any]:
-
-        '''
+        """
         Compute log entries newer than the given cursor.
 
         Args:
@@ -69,15 +68,15 @@ class LogBuffer(logging.Handler):
 
         Returns:
             dict[str, Any]: Dict with entries list and last_id cursor
-        '''
+        """
 
         min_level = LEVEL_VALUES.get(level.upper(), logging.DEBUG)
 
         with self._lock:
             entries = [
-                e for e in self._buffer
-                if e['id'] > after
-                and LEVEL_VALUES.get(e['level'], logging.DEBUG) >= min_level
+                e
+                for e in self._buffer
+                if e['id'] > after and LEVEL_VALUES.get(e['level'], logging.DEBUG) >= min_level
             ]
             last_id = self._counter
 
