@@ -1,7 +1,7 @@
 """Tests for Agent0 daemon module."""
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from agent0.config import Config
 from agent0.daemon import Scheduler, _RunningTask
@@ -9,7 +9,12 @@ from agent0.router import TaskContext
 
 
 def _make_config() -> Config:
-    return Config(github_token='test', anthropic_api_key='test', github_user='test-bot', whitelisted_orgs=('testorg',))
+    return Config(
+        github_token='test',
+        anthropic_api_key='test',
+        github_user='test-bot',
+        whitelisted_orgs=('testorg',),
+    )
 
 
 def _make_context(owner: str = 'org', repo: str = 'repo', number: int = 1) -> TaskContext:
@@ -32,7 +37,6 @@ def _make_context(owner: str = 'org', repo: str = 'repo', number: int = 1) -> Ta
 
 
 class TestSchedulerHasTaskFor:
-
     def test_no_tasks(self) -> None:
         scheduler = Scheduler(_make_config())
         assert not scheduler.has_task_for('org', 'repo', 1)
@@ -43,7 +47,7 @@ class TestSchedulerHasTaskFor:
         scheduler._running['org/repo'] = _RunningTask(
             context=ctx,
             started_at=time.monotonic(),
-            started_at_utc=datetime.now(timezone.utc).isoformat(),
+            started_at_utc=datetime.now(UTC).isoformat(),
         )
         assert scheduler.has_task_for('org', 'repo', 42)
 
@@ -53,7 +57,7 @@ class TestSchedulerHasTaskFor:
         scheduler._running['org/repo'] = _RunningTask(
             context=ctx,
             started_at=time.monotonic(),
-            started_at_utc=datetime.now(timezone.utc).isoformat(),
+            started_at_utc=datetime.now(UTC).isoformat(),
         )
         assert not scheduler.has_task_for('org', 'repo', 99)
 

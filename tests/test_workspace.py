@@ -9,8 +9,7 @@ from agent0.workspace import WorkspaceManager
 
 
 def _make_config(tmp_path: Path) -> Config:
-
-    '''
+    """
     Compute test configuration with temp data directory.
 
     Args:
@@ -18,7 +17,7 @@ def _make_config(tmp_path: Path) -> Config:
 
     Returns:
         Config: Test config
-    '''
+    """
 
     return Config(
         github_token='ghp_test123',
@@ -30,15 +29,13 @@ def _make_config(tmp_path: Path) -> Config:
 
 
 class TestWorkspacePath:
-
     def test_path_construction(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that workspace path follows owner/repo structure.
 
         Returns:
             None
-        '''
+        """
 
         mgr = WorkspaceManager(_make_config(tmp_path))
         path = mgr._workspace_path('myorg', 'myrepo')
@@ -46,15 +43,13 @@ class TestWorkspacePath:
 
 
 class TestCloneUrl:
-
     def test_token_embedded(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that clone URL contains the token.
 
         Returns:
             None
-        '''
+        """
 
         mgr = WorkspaceManager(_make_config(tmp_path))
         url = mgr._clone_url('myorg', 'myrepo')
@@ -62,16 +57,14 @@ class TestCloneUrl:
 
 
 class TestPrepare:
-
     @pytest.mark.asyncio
     async def test_clone_new_repo(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that a new repo triggers git clone.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -89,13 +82,12 @@ class TestPrepare:
 
     @pytest.mark.asyncio
     async def test_update_existing_repo(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that existing repo triggers fetch and reset.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -119,13 +111,12 @@ class TestPrepare:
 
     @pytest.mark.asyncio
     async def test_clone_failure_raises(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that clone failure raises RuntimeError.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -138,13 +129,12 @@ class TestPrepare:
 
     @pytest.mark.asyncio
     async def test_fetch_failure_raises(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that fetch failure raises RuntimeError.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -160,13 +150,12 @@ class TestPrepare:
 
     @pytest.mark.asyncio
     async def test_default_branch_fallback(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that rev-parse failure falls back to origin/main.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -190,16 +179,14 @@ class TestPrepare:
 
 
 class TestCleanupStale:
-
     @pytest.mark.asyncio
     async def test_no_workspaces_dir(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that missing workspaces directory returns empty list.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -209,13 +196,12 @@ class TestCleanupStale:
 
     @pytest.mark.asyncio
     async def test_removes_stale_workspace(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that workspace older than threshold is removed.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -226,6 +212,7 @@ class TestCleanupStale:
 
         old_time = time.time() - (8 * 86400)
         import os
+
         os.utime(workspace, (old_time, old_time))
 
         with patch.object(mgr, '_run_git', new_callable=AsyncMock) as mock_git:
@@ -237,13 +224,12 @@ class TestCleanupStale:
 
     @pytest.mark.asyncio
     async def test_keeps_fresh_workspace(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that recently accessed workspace is kept.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -259,13 +245,12 @@ class TestCleanupStale:
 
     @pytest.mark.asyncio
     async def test_removes_empty_owner_dir(self, tmp_path: Path) -> None:
-
-        '''
+        """
         Compute that empty owner directory is removed after cleanup.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config(tmp_path)
         mgr = WorkspaceManager(config)
@@ -277,6 +262,7 @@ class TestCleanupStale:
 
         old_time = time.time() - (8 * 86400)
         import os
+
         os.utime(workspace, (old_time, old_time))
 
         with patch.object(mgr, '_run_git', new_callable=AsyncMock) as mock_git:

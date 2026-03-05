@@ -12,20 +12,23 @@ from agent0.router import TaskContext
 
 
 def _make_config() -> Config:
-
-    '''
+    """
     Compute test configuration.
 
     Returns:
         Config: Test config
-    '''
+    """
 
-    return Config(github_token='test', anthropic_api_key='test', github_user='test-bot', whitelisted_orgs=('testorg',))
+    return Config(
+        github_token='test',
+        anthropic_api_key='test',
+        github_user='test-bot',
+        whitelisted_orgs=('testorg',),
+    )
 
 
 def _make_context(**overrides) -> TaskContext:
-
-    '''
+    """
     Compute test TaskContext with sensible defaults.
 
     Args:
@@ -33,7 +36,7 @@ def _make_context(**overrides) -> TaskContext:
 
     Returns:
         TaskContext: Test context
-    '''
+    """
 
     defaults = {
         'event_type': 'mention',
@@ -58,15 +61,13 @@ def _make_context(**overrides) -> TaskContext:
 
 
 class TestBuildPrompt:
-
     def test_preamble_present(self) -> None:
-
-        '''
+        """
         Compute that prompt contains preamble with repo info.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context()
@@ -77,13 +78,12 @@ class TestBuildPrompt:
         assert 'Never force push' in prompt
 
     def test_whitelisted_orgs_in_preamble(self) -> None:
-
-        '''
+        """
         Compute that whitelisted orgs appear in the prompt preamble.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context()
@@ -92,13 +92,12 @@ class TestBuildPrompt:
         assert 'testorg' in prompt
 
     def test_mention_issue_prompt(self) -> None:
-
-        '''
+        """
         Compute that mention in issue generates correct prompt structure.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -115,13 +114,12 @@ class TestBuildPrompt:
         assert 'gh issue comment' in prompt
 
     def test_mention_pr_prompt(self) -> None:
-
-        '''
+        """
         Compute that mention in PR generates correct prompt structure.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -139,13 +137,12 @@ class TestBuildPrompt:
         assert 'gh pr comment' in prompt
 
     def test_assignment_prompt(self) -> None:
-
-        '''
+        """
         Compute that assignment generates correct prompt structure.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -163,13 +160,12 @@ class TestBuildPrompt:
         assert 'Closes #42' in prompt
 
     def test_review_request_prompt(self) -> None:
-
-        '''
+        """
         Compute that review request generates correct prompt structure.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -190,13 +186,12 @@ class TestBuildPrompt:
         assert '--approve' in prompt
 
     def test_review_request_uses_inline_comments(self) -> None:
-
-        '''
+        """
         Compute that review request prompt instructs inline review comments.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -214,13 +209,12 @@ class TestBuildPrompt:
         assert 'reviews --method POST --input' in prompt
 
     def test_review_request_has_rereviewed_logic(self) -> None:
-
-        '''
+        """
         Compute that review request prompt includes re-review instructions.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -238,13 +232,12 @@ class TestBuildPrompt:
         assert 'Do NOT look for new issues' in prompt
 
     def test_review_request_includes_owner_repo(self) -> None:
-
-        '''
+        """
         Compute that review prompt includes owner/repo for API calls.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -261,13 +254,12 @@ class TestBuildPrompt:
         assert 'zero-bang' in prompt
 
     def test_no_body_fallback(self) -> None:
-
-        '''
+        """
         Compute that missing issue body shows placeholder.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(issue_body=None)
@@ -276,13 +268,12 @@ class TestBuildPrompt:
         assert '(no description)' in prompt
 
     def test_no_labels_fallback(self) -> None:
-
-        '''
+        """
         Compute that empty labels list shows placeholder.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(event_type='assignment', labels=[])
@@ -291,13 +282,12 @@ class TestBuildPrompt:
         assert '(none)' in prompt
 
     def test_ci_failure_prompt(self) -> None:
-
-        '''
+        """
         Compute that ci_failure event generates correct prompt structure.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(
@@ -319,13 +309,12 @@ class TestBuildPrompt:
         assert 'Fix the failing checks' in prompt
 
     def test_unknown_event_type(self) -> None:
-
-        '''
+        """
         Compute that unknown event type produces fallback prompt.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         ctx = _make_context(event_type='unknown_type')
@@ -335,15 +324,13 @@ class TestBuildPrompt:
 
 
 class TestParseOutput:
-
     def test_valid_json(self) -> None:
-
-        '''
+        """
         Compute that valid JSON output is parsed correctly.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'result': 'I fixed the bug',
@@ -363,13 +350,12 @@ class TestParseOutput:
         assert parsed['num_turns'] == 3
 
     def test_error_response(self) -> None:
-
-        '''
+        """
         Compute that error response is parsed correctly.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'result': 'Something went wrong',
@@ -385,13 +371,12 @@ class TestParseOutput:
         assert parsed['result'] == 'Something went wrong'
 
     def test_invalid_json(self) -> None:
-
-        '''
+        """
         Compute that invalid JSON returns error result with raw text.
 
         Returns:
             None
-        '''
+        """
 
         parsed = _parse_output('not valid json at all')
 
@@ -401,26 +386,24 @@ class TestParseOutput:
         assert parsed['total_input_tokens'] == 0
 
     def test_empty_string(self) -> None:
-
-        '''
+        """
         Compute that empty string returns error result.
 
         Returns:
             None
-        '''
+        """
 
         parsed = _parse_output('')
 
         assert parsed['is_error'] is True
 
     def test_missing_fields_default(self) -> None:
-
-        '''
+        """
         Compute that missing fields get default values.
 
         Returns:
             None
-        '''
+        """
 
         parsed = _parse_output('{}')
 
@@ -432,13 +415,12 @@ class TestParseOutput:
         assert parsed['num_turns'] == 0
 
     def test_verbose_list_output(self) -> None:
-
-        '''
+        """
         Compute that verbose JSON array output is parsed correctly.
 
         Returns:
             None
-        '''
+        """
 
         data = [
             {'type': 'assistant', 'message': {'content': 'thinking'}},
@@ -463,13 +445,12 @@ class TestParseOutput:
         assert parsed['num_turns'] == 5
 
     def test_verbose_list_no_result_key(self) -> None:
-
-        '''
+        """
         Compute that verbose array without result key uses last element.
 
         Returns:
             None
-        '''
+        """
 
         data = [
             {'type': 'assistant', 'message': 'hello'},
@@ -481,38 +462,38 @@ class TestParseOutput:
         assert parsed['num_turns'] == 1
 
     def test_verbose_empty_list(self) -> None:
-
-        '''
+        """
         Compute that empty JSON array returns error result.
 
         Returns:
             None
-        '''
+        """
 
         parsed = _parse_output('[]')
 
         assert parsed['is_error'] is True
 
     def test_stream_json_multiline(self) -> None:
-
-        '''
+        """
         Compute that stream-json format with one JSON per line is parsed.
 
         Returns:
             None
-        '''
+        """
 
         lines = [
             json.dumps({'type': 'assistant', 'message': 'working'}),
-            json.dumps({
-                'type': 'result',
-                'result': 'All done',
-                'is_error': False,
-                'total_cost_usd': 0.03,
-                'total_input_tokens': 800,
-                'total_output_tokens': 200,
-                'num_turns': 2,
-            }),
+            json.dumps(
+                {
+                    'type': 'result',
+                    'result': 'All done',
+                    'is_error': False,
+                    'total_cost_usd': 0.03,
+                    'total_input_tokens': 800,
+                    'total_output_tokens': 200,
+                    'num_turns': 2,
+                }
+            ),
         ]
         raw = '\n'.join(lines)
         parsed = _parse_output(raw)
@@ -524,15 +505,13 @@ class TestParseOutput:
 
 
 class TestExtractResultFromList:
-
     def test_finds_result_message(self) -> None:
-
-        '''
+        """
         Compute that result message is extracted from verbose array.
 
         Returns:
             None
-        '''
+        """
 
         data = [
             {'type': 'assistant'},
@@ -544,26 +523,24 @@ class TestExtractResultFromList:
         assert result['total_cost_usd'] == 0.05
 
     def test_empty_list_returns_error(self) -> None:
-
-        '''
+        """
         Compute that empty list returns error defaults.
 
         Returns:
             None
-        '''
+        """
 
         result = _extract_result_from_list([])
 
         assert result['is_error'] is True
 
     def test_non_dict_elements_skipped(self) -> None:
-
-        '''
+        """
         Compute that non-dict elements in list are skipped.
 
         Returns:
             None
-        '''
+        """
 
         data = ['string', 123, {'result': 'ok', 'is_error': False}]
         result = _extract_result_from_list(data)
@@ -572,15 +549,13 @@ class TestExtractResultFromList:
 
 
 class TestExecutorResult:
-
     def test_dataclass_fields(self) -> None:
-
-        '''
+        """
         Compute that ExecutorResult has all expected fields.
 
         Returns:
             None
-        '''
+        """
 
         result = ExecutorResult(
             status='success',
@@ -605,15 +580,13 @@ class TestExecutorResult:
 
 
 class TestFormatStreamLine:
-
     def test_assistant_text(self) -> None:
-
-        '''
+        """
         Compute that assistant text content is extracted.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'assistant',
@@ -626,13 +599,12 @@ class TestFormatStreamLine:
         assert result == 'Let me look at the code'
 
     def test_assistant_thinking_skipped(self) -> None:
-
-        '''
+        """
         Compute that assistant thinking blocks are skipped.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'assistant',
@@ -645,13 +617,12 @@ class TestFormatStreamLine:
         assert result is None
 
     def test_tool_use_bash(self) -> None:
-
-        '''
+        """
         Compute that Bash tool use shows command.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'tool_use',
@@ -665,13 +636,12 @@ class TestFormatStreamLine:
         assert result == '> Bash: git status'
 
     def test_tool_use_read(self) -> None:
-
-        '''
+        """
         Compute that Read tool use shows file path.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'tool_use',
@@ -685,13 +655,12 @@ class TestFormatStreamLine:
         assert result == '> Read: /src/main.py'
 
     def test_tool_use_grep(self) -> None:
-
-        '''
+        """
         Compute that Grep tool use shows pattern.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'tool_use',
@@ -705,13 +674,12 @@ class TestFormatStreamLine:
         assert result == '> Grep: def main'
 
     def test_tool_use_no_input(self) -> None:
-
-        '''
+        """
         Compute that tool use without input shows name only.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'tool_use',
@@ -722,13 +690,12 @@ class TestFormatStreamLine:
         assert result == '> TodoRead'
 
     def test_result_line(self) -> None:
-
-        '''
+        """
         Compute that result line shows turns and cost.
 
         Returns:
             None
-        '''
+        """
 
         data = {
             'type': 'result',
@@ -741,39 +708,36 @@ class TestFormatStreamLine:
         assert result == 'Done (5 turns, $0.1234)'
 
     def test_system_returns_none(self) -> None:
-
-        '''
+        """
         Compute that system messages are skipped.
 
         Returns:
             None
-        '''
+        """
 
         data = {'type': 'system', 'subtype': 'init'}
 
         assert _format_stream_line(data) is None
 
     def test_tool_result_returns_none(self) -> None:
-
-        '''
+        """
         Compute that tool results are skipped.
 
         Returns:
             None
-        '''
+        """
 
         data = {'type': 'tool_result', 'tool': {'content': 'file contents...'}}
 
         assert _format_stream_line(data) is None
 
     def test_text_truncated(self) -> None:
-
-        '''
+        """
         Compute that long assistant text is truncated to 300 chars.
 
         Returns:
             None
-        '''
+        """
 
         long_text = 'x' * 500
         data = {

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from agent0.config import Config
 from agent0.router import (
@@ -11,96 +11,91 @@ from agent0.router import (
 
 
 def _make_config() -> Config:
-
-    '''
+    """
     Compute test configuration.
 
     Returns:
         Config: Test config
-    '''
+    """
 
-    return Config(github_token='test', anthropic_api_key='test', github_user='test-bot', whitelisted_orgs=('testorg',))
+    return Config(
+        github_token='test',
+        anthropic_api_key='test',
+        github_user='test-bot',
+        whitelisted_orgs=('testorg',),
+    )
 
 
 class TestShouldProcess:
-
     def test_mention(self) -> None:
-
-        '''
+        """
         Compute that mention reason is actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert should_process({'reason': 'mention'}, _make_config())
 
     def test_assign(self) -> None:
-
-        '''
+        """
         Compute that assign reason is actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert should_process({'reason': 'assign'}, _make_config())
 
     def test_review_requested(self) -> None:
-
-        '''
+        """
         Compute that review_requested reason is actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert should_process({'reason': 'review_requested'}, _make_config())
 
     def test_ci_activity(self) -> None:
-
-        '''
+        """
         Compute that ci_activity reason is actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert should_process({'reason': 'ci_activity'}, _make_config())
 
     def test_subscribed_not_actionable(self) -> None:
-
-        '''
+        """
         Compute that subscribed reason is not actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert not should_process({'reason': 'subscribed'}, _make_config())
 
     def test_empty_reason_not_actionable(self) -> None:
-
-        '''
+        """
         Compute that empty reason is not actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert not should_process({'reason': ''}, _make_config())
 
 
 class TestClassify:
-
     def test_mention_event(self) -> None:
-
-        '''
+        """
         Compute that mention notification maps to mention event type.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         notification = {
@@ -131,13 +126,12 @@ class TestClassify:
         assert task.notification_id == '123'
 
     def test_assign_event(self) -> None:
-
-        '''
+        """
         Compute that assign notification maps to assignment event type.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         notification = {
@@ -162,13 +156,12 @@ class TestClassify:
         assert task.event_type == 'assignment'
 
     def test_review_request_event(self) -> None:
-
-        '''
+        """
         Compute that review_requested maps to review_request event type.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         notification = {
@@ -195,13 +188,12 @@ class TestClassify:
         assert task.head_ref == 'feature-branch'
 
     def test_ci_activity_event(self) -> None:
-
-        '''
+        """
         Compute that ci_activity notification maps to ci_failure event type.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         notification = {
@@ -228,38 +220,33 @@ class TestClassify:
         assert task.trigger_text == '### lint (failure)\nFlake8 found 3 errors'
         assert task.number == 15
 
-
     def test_comment_is_actionable(self) -> None:
-
-        '''
+        """
         Compute that comment reason is actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert should_process({'reason': 'comment'}, _make_config())
 
     def test_author_is_actionable(self) -> None:
-
-        '''
+        """
         Compute that author reason is actionable.
 
         Returns:
             None
-        '''
+        """
 
         assert should_process({'reason': 'author'}, _make_config())
 
-
     def test_comment_event(self) -> None:
-
-        '''
+        """
         Compute that comment notification maps to mention event type.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         notification = {
@@ -292,41 +279,37 @@ class TestClassify:
 
 
 class TestIsSelfTriggered:
-
     def test_self_triggered(self) -> None:
-
-        '''
+        """
         Compute that agent's own actions are detected.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         context = {'actor': 'test-bot'}
         assert is_self_triggered(context, config)
 
     def test_case_insensitive(self) -> None:
-
-        '''
+        """
         Compute that self-detection is case-insensitive.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         context = {'actor': 'Test-Bot'}
         assert is_self_triggered(context, config)
 
     def test_not_self_triggered(self) -> None:
-
-        '''
+        """
         Compute that other users are not self-triggered.
 
         Returns:
             None
-        '''
+        """
 
         config = _make_config()
         context = {'actor': 'someuser'}
@@ -334,26 +317,23 @@ class TestIsSelfTriggered:
 
 
 class TestFormatComments:
-
     def test_empty_comments(self) -> None:
-
-        '''
+        """
         Compute that empty list returns placeholder.
 
         Returns:
             None
-        '''
+        """
 
         assert format_comments([]) == '(no comments)'
 
     def test_single_comment(self) -> None:
-
-        '''
+        """
         Compute that single comment formats correctly.
 
         Returns:
             None
-        '''
+        """
 
         comments = [
             {
@@ -367,13 +347,12 @@ class TestFormatComments:
         assert 'Hello world' in result
 
     def test_multiple_comments_separated(self) -> None:
-
-        '''
+        """
         Compute that multiple comments are separated by dividers.
 
         Returns:
             None
-        '''
+        """
 
         comments = [
             {'user': {'login': 'alice'}, 'body': 'First', 'created_at': '2020-01-01T00:00:00Z'},
@@ -386,71 +365,65 @@ class TestFormatComments:
 
 
 class TestFormatTimestamp:
-
     def test_just_now(self) -> None:
-
-        '''
+        """
         Compute that very recent timestamps show as just now.
 
         Returns:
             None
-        '''
+        """
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         ts = now.isoformat().replace('+00:00', 'Z')
         result = _format_timestamp(ts, now)
         assert result == 'just now'
 
     def test_minutes_ago(self) -> None:
-
-        '''
+        """
         Compute that timestamps within an hour show minutes.
 
         Returns:
             None
-        '''
+        """
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         ts = (now - timedelta(minutes=15)).isoformat().replace('+00:00', 'Z')
         result = _format_timestamp(ts, now)
         assert '15 minutes ago' in result
 
     def test_hours_ago(self) -> None:
-
-        '''
+        """
         Compute that timestamps within a day show hours.
 
         Returns:
             None
-        '''
+        """
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         ts = (now - timedelta(hours=3)).isoformat().replace('+00:00', 'Z')
         result = _format_timestamp(ts, now)
         assert '3 hours ago' in result
 
     def test_old_timestamp_absolute(self) -> None:
-
-        '''
+        """
         Compute that timestamps older than a week show absolute format.
 
         Returns:
             None
-        '''
+        """
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         ts = (now - timedelta(days=30)).isoformat().replace('+00:00', 'Z')
         result = _format_timestamp(ts, now)
         assert 'UTC' in result
 
     def test_invalid_timestamp(self) -> None:
-
-        '''
+        """
         Compute that invalid timestamp returns unknown.
 
         Returns:
             None
-        '''
+        """
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         assert _format_timestamp('not-a-date', now) == 'unknown time'

@@ -11,8 +11,7 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Config:
-
-    '''
+    """
     Compute configuration from environment variables.
 
     Args:
@@ -29,7 +28,7 @@ class Config:
 
     Returns:
         Config: Frozen configuration dataclass
-    '''
+    """
 
     github_token: str
     anthropic_api_key: str
@@ -44,36 +43,33 @@ class Config:
 
     @property
     def workspaces_dir(self) -> Path:
-
-        '''
+        """
         Compute path to workspaces directory.
 
         Returns:
             Path: The workspaces directory path
-        '''
+        """
 
         return self.data_dir / 'workspaces'
 
     @property
     def audit_dir(self) -> Path:
-
-        '''
+        """
         Compute path to audit logs directory.
 
         Returns:
             Path: The audit directory path
-        '''
+        """
 
         return self.data_dir / 'audit'
 
     def log_redacted(self) -> str:
-
-        '''
+        """
         Compute redacted string representation of config for logging.
 
         Returns:
             str: Config values with secrets masked
-        '''
+        """
 
         def _mask(value: str) -> str:
             if len(value) <= 8:
@@ -95,13 +91,12 @@ class Config:
 
 
 def load_config() -> Config:
-
-    '''
+    """
     Compute Config from environment variables.
 
     Returns:
         Config: Validated configuration loaded from environment
-    '''
+    """
 
     github_token = os.environ.get('GITHUB_TOKEN', '')
     anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY', '')

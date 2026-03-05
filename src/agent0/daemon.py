@@ -3,7 +3,7 @@ import logging
 import time
 import traceback
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agent0.audit import AuditEntry, log_entry
@@ -14,7 +14,7 @@ from agent0.poller import GitHubClient, Poller, RateLimited
 from agent0.router import TaskContext, classify, is_self_triggered, should_process
 from agent0.workspace import WorkspaceManager
 
-__all__ = ['Scheduler', 'Daemon']
+__all__ = ['Daemon', 'Scheduler']
 
 log = logging.getLogger(__name__)
 
@@ -23,8 +23,7 @@ CI_SCAN_INTERVAL = 5
 
 @dataclass
 class _RunningTask:
-
-    '''
+    """
     Compute in-memory representation of a running task.
 
     Args:
@@ -34,7 +33,7 @@ class _RunningTask:
 
     Returns:
         _RunningTask: Running task metadata
-    '''
+    """
 
     context: TaskContext
     started_at: float
@@ -42,8 +41,7 @@ class _RunningTask:
 
 
 class Scheduler:
-
-    '''
+    """
     Compute per-repo task scheduling with concurrency control.
 
     One task per repo at a time. Different repos run in parallel.
@@ -53,7 +51,7 @@ class Scheduler:
 
     Returns:
         Scheduler: Task scheduler with dashboard state exposure
-    '''
+    """
 
     def __init__(self, config: Config) -> None:
         self._config = config
@@ -65,8 +63,7 @@ class Scheduler:
         self._poller: Poller | None = None
 
     def set_poller(self, poller: Poller) -> None:
-
-        '''
+        """
         Compute poller reference for marking notifications as read.
 
         Args:
@@ -74,13 +71,12 @@ class Scheduler:
 
         Returns:
             None
-        '''
+        """
 
         self._poller = poller
 
     def has_task_for(self, owner: str, repo: str, number: int) -> bool:
-
-        '''
+        """
         Check if a task for the same PR/issue is already running or queued.
 
         Args:
@@ -90,7 +86,7 @@ class Scheduler:
 
         Returns:
             bool: True if a matching task exists
-        '''
+        """
 
         repo_key = f'{owner}/{repo}'
 
@@ -105,8 +101,7 @@ class Scheduler:
         return False
 
     def submit(self, context: TaskContext) -> asyncio.Task[None]:
-
-        '''
+        """
         Compute an asyncio task that executes the given task context.
 
         Args:
@@ -114,7 +109,7 @@ class Scheduler:
 
         Returns:
             asyncio.Task[None]: The scheduled asyncio task
-        '''
+        """
 
         repo_key = f'{context.owner}/{context.repo}'
 
@@ -128,8 +123,7 @@ class Scheduler:
         return asyncio.create_task(self._execute(context, repo_key))
 
     async def _execute(self, context: TaskContext, repo_key: str) -> None:
-
-        '''
+        """
         Compute task execution with per-repo locking and audit logging.
 
         Args:
@@ -138,7 +132,7 @@ class Scheduler:
 
         Returns:
             None
-        '''
+        """
 
         lock = self._locks[repo_key]
 
@@ -148,7 +142,7 @@ class Scheduler:
                 if not self._queued[repo_key]:
                     del self._queued[repo_key]
 
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
             self._running[repo_key] = _RunningTask(
                 context=context,
                 started_at=time.monotonic(),
@@ -202,8 +196,7 @@ class Scheduler:
         result: ExecutorResult,
         output_lines: list[str] | None = None,
     ) -> None:
-
-        '''
+        """
         Compute and persist audit entry from task result.
 
         Args:
@@ -213,10 +206,10 @@ class Scheduler:
 
         Returns:
             None
-        '''
+        """
 
         entry = AuditEntry(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             notification_id=context.notification_id,
             event_type=context.event_type,
             repo=f'{context.owner}/{context.repo}',
@@ -240,53 +233,54 @@ class Scheduler:
             log.error('Failed to write audit entry: %s', traceback.format_exc())
 
     def get_running(self) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute list of running tasks for dashboard.
 
         Returns:
             list[dict[str, Any]]: Running task metadata
-        '''
+        """
 
         tasks = []
         now = time.monotonic()
         for repo_key, rt in self._running.items():
-            tasks.append({
-                'repo': repo_key,
-                'event_type': rt.context.event_type,
-                'number': rt.context.number,
-                'trigger_user': rt.context.trigger_user,
-                'trigger_text': rt.context.trigger_text[:100],
-                'started_at': rt.started_at_utc,
-                'elapsed_seconds': round(now - rt.started_at, 1),
-            })
+            tasks.append(
+                {
+                    'repo': repo_key,
+                    'event_type': rt.context.event_type,
+                    'number': rt.context.number,
+                    'trigger_user': rt.context.trigger_user,
+                    'trigger_text': rt.context.trigger_text[:100],
+                    'started_at': rt.started_at_utc,
+                    'elapsed_seconds': round(now - rt.started_at, 1),
+                }
+            )
         return tasks
 
     def get_queued(self) -> list[dict[str, Any]]:
-
-        '''
+        """
         Compute list of queued tasks for dashboard.
 
         Returns:
             list[dict[str, Any]]: Queued task metadata
-        '''
+        """
 
         tasks = []
         for repo_key, contexts in self._queued.items():
             for i, ctx in enumerate(contexts):
-                tasks.append({
-                    'repo': repo_key,
-                    'event_type': ctx.event_type,
-                    'number': ctx.number,
-                    'trigger_user': ctx.trigger_user,
-                    'trigger_text': ctx.trigger_text[:100],
-                    'position': i + 1,
-                })
+                tasks.append(
+                    {
+                        'repo': repo_key,
+                        'event_type': ctx.event_type,
+                        'number': ctx.number,
+                        'trigger_user': ctx.trigger_user,
+                        'trigger_text': ctx.trigger_text[:100],
+                        'position': i + 1,
+                    }
+                )
         return tasks
 
     def get_executor_output(self, repo_key: str, after: int = 0) -> dict[str, Any]:
-
-        '''
+        """
         Compute buffered executor output lines for live dashboard view.
 
         Args:
@@ -295,20 +289,15 @@ class Scheduler:
 
         Returns:
             dict[str, Any]: Dict with entries list and last_id cursor
-        '''
+        """
 
         lines = self._output_buffers.get(repo_key, [])
-        entries = [
-            {'id': i + 1, 'text': line}
-            for i, line in enumerate(lines)
-            if i + 1 > after
-        ]
+        entries = [{'id': i + 1, 'text': line} for i, line in enumerate(lines) if i + 1 > after]
         return {'entries': entries, 'last_id': len(lines)}
 
 
 class Daemon:
-
-    '''
+    """
     Compute main daemon lifecycle: startup, poll loop, shutdown.
 
     Args:
@@ -316,7 +305,7 @@ class Daemon:
 
     Returns:
         Daemon: The main daemon orchestrator
-    '''
+    """
 
     def __init__(self, config: Config) -> None:
         self._config = config
@@ -329,24 +318,22 @@ class Daemon:
 
     @property
     def scheduler(self) -> Scheduler:
-
-        '''
+        """
         Compute scheduler reference for API layer.
 
         Returns:
             Scheduler: The task scheduler
-        '''
+        """
 
         return self._scheduler
 
     async def start(self) -> None:
-
-        '''
+        """
         Compute startup checks and initialize data directories.
 
         Returns:
             None
-        '''
+        """
 
         log.info('Running startup checks...')
 
@@ -369,13 +356,12 @@ class Daemon:
         log.info('Data directories initialized')
 
     async def poll_loop(self) -> None:
-
-        '''
+        """
         Compute main polling loop that processes notifications.
 
         Returns:
             None
-        '''
+        """
 
         self._running = True
         log.info('Entering poll loop (interval=%ds)', self._config.poll_interval)
@@ -475,13 +461,12 @@ class Daemon:
             await asyncio.sleep(self._config.poll_interval)
 
     async def shutdown(self) -> None:
-
-        '''
+        """
         Compute graceful shutdown: stop loop, wait for tasks, close client.
 
         Returns:
             None
-        '''
+        """
 
         log.info('Shutting down...')
         self._running = False

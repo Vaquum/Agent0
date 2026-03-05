@@ -16,22 +16,16 @@ log = logging.getLogger(__name__)
 
 
 class _SchedulerLike(Protocol):
+    def get_running(self) -> list[dict[str, Any]]: ...
 
-    def get_running(self) -> list[dict[str, Any]]:
-        ...
+    def get_queued(self) -> list[dict[str, Any]]: ...
 
-    def get_queued(self) -> list[dict[str, Any]]:
-        ...
-
-    def get_executor_output(self, repo_key: str, after: int = 0) -> dict[str, Any]:
-        ...
+    def get_executor_output(self, repo_key: str, after: int = 0) -> dict[str, Any]: ...
 
 
 class _DaemonLike(Protocol):
-
     @property
-    def scheduler(self) -> _SchedulerLike:
-        ...
+    def scheduler(self) -> _SchedulerLike: ...
 
 
 def create_app(
@@ -39,8 +33,7 @@ def create_app(
     config: Config,
     log_buffer: LogBuffer | None = None,
 ) -> FastAPI:
-
-    '''
+    """
     Compute FastAPI application with API routes and static frontend.
 
     Args:
@@ -50,7 +43,7 @@ def create_app(
 
     Returns:
         FastAPI: Configured FastAPI application
-    '''
+    """
 
     app = FastAPI(title='Agent0', version=__version__)
 
@@ -99,7 +92,9 @@ def create_app(
         timestamp: str | None = Query(None),
     ) -> dict[str, Any]:
         output = await read_entry_output(
-            config, notification_id, timestamp,
+            config,
+            notification_id,
+            timestamp,
         )
         if output is None:
             return {'entries': []}

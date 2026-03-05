@@ -18,8 +18,7 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class ExecutorResult:
-
-    '''
+    """
     Compute structured result from a Claude Code execution.
 
     Args:
@@ -35,7 +34,7 @@ class ExecutorResult:
 
     Returns:
         ExecutorResult: Structured execution result
-    '''
+    """
 
     status: str
     response: str | None
@@ -49,8 +48,7 @@ class ExecutorResult:
 
 
 def _build_prompt(context: TaskContext, config: Config) -> str:
-
-    '''
+    """
     Compute full prompt for the Claude Code CLI.
 
     Args:
@@ -59,7 +57,7 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
 
     Returns:
         str: Complete prompt with preamble and event-specific instructions
-    '''
+    """
 
     preamble = prompts.PREAMBLE.format(
         owner=context.owner,
@@ -121,8 +119,8 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
         )
     else:
         body = (
-            f"Notification received with event type: {context.event_type}"
-            f"\n\n{context.trigger_text}"
+            f'Notification received with event type: {context.event_type}'
+            f'\n\n{context.trigger_text}'
         )
 
     return f'{preamble}\n\n{body}'
@@ -148,8 +146,7 @@ _ERROR_DEFAULTS: dict[str, object] = {
 
 
 def _extract_result_from_list(data: list[Any]) -> dict[str, Any]:
-
-    '''
+    """
     Compute result dict from verbose JSON array output.
 
     Args:
@@ -157,7 +154,7 @@ def _extract_result_from_list(data: list[Any]) -> dict[str, Any]:
 
     Returns:
         dict: Extracted result with tokens, cost, and turn count
-    '''
+    """
 
     for msg in reversed(data):
         if isinstance(msg, dict) and 'result' in msg:
@@ -171,8 +168,7 @@ def _extract_result_from_list(data: list[Any]) -> dict[str, Any]:
 
 
 def _parse_output(raw: str) -> dict[str, Any]:
-
-    '''
+    """
     Compute structured data from Claude Code JSON output.
 
     Handles three formats: single dict (standard), list (verbose),
@@ -183,7 +179,7 @@ def _parse_output(raw: str) -> dict[str, Any]:
 
     Returns:
         dict: Parsed output with result, tokens, cost, and turn count
-    '''
+    """
 
     if not raw or not raw.strip():
         return dict(_ERROR_DEFAULTS, result=raw)
@@ -215,8 +211,7 @@ def _parse_output(raw: str) -> dict[str, Any]:
 
 
 def _format_stream_line(data: dict[str, Any]) -> str | None:
-
-    '''
+    """
     Compute human-readable text from a stream-json line.
 
     Args:
@@ -224,7 +219,7 @@ def _format_stream_line(data: dict[str, Any]) -> str | None:
 
     Returns:
         str | None: Formatted text or None if line should be skipped
-    '''
+    """
 
     msg_type = data.get('type', '')
 
@@ -253,7 +248,7 @@ def _format_stream_line(data: dict[str, Any]) -> str | None:
     if msg_type == 'result':
         turns = data.get('num_turns', 0)
         cost = data.get('total_cost_usd', 0.0)
-        return f"Done ({turns} turns, ${cost:.4f})"
+        return f'Done ({turns} turns, ${cost:.4f})'
 
     return None
 
@@ -262,8 +257,7 @@ _PTY_READ_SIZE = 4096
 
 
 def _pty_read(fd: int | None) -> bytes:
-
-    '''
+    """
     Compute a blocking read from a PTY file descriptor.
 
     Args:
@@ -271,7 +265,7 @@ def _pty_read(fd: int | None) -> bytes:
 
     Returns:
         bytes: Data read from the PTY, empty on EOF
-    '''
+    """
 
     if fd is None:
         return b''
@@ -287,8 +281,7 @@ async def run(
     config: Config,
     output_lines: list[str] | None = None,
 ) -> ExecutorResult:
-
-    '''
+    """
     Compute execution result by spawning Claude Code CLI subprocess.
 
     Streams stdout line-by-line via stream-json for live dashboard visibility.
@@ -301,7 +294,7 @@ async def run(
 
     Returns:
         ExecutorResult: Structured result including response, tokens, and cost
-    '''
+    """
 
     prompt = _build_prompt(context, config)
     start_time = time.monotonic()
@@ -328,9 +321,11 @@ async def run(
         'claude',
         '--print',
         '--verbose',
-        '--output-format', 'stream-json',
+        '--output-format',
+        'stream-json',
         '--dangerously-skip-permissions',
-        '--max-turns', str(config.max_turns),
+        '--max-turns',
+        str(config.max_turns),
     ]
 
     log.info('Spawning: %s (cwd=%s)', ' '.join(cmd), workspace_path)
@@ -367,7 +362,9 @@ async def run(
             while True:
                 try:
                     chunk = await loop.run_in_executor(
-                        None, _pty_read, master_fd,
+                        None,
+                        _pty_read,
+                        master_fd,
                     )
                 except OSError:
                     break
@@ -415,7 +412,7 @@ async def run(
                 asyncio.gather(_stream_stdout_pty(), _drain_stderr()),
                 timeout=config.executor_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = time.monotonic() - start_time
             log.error(
                 'Execution timed out for %s/%s#%d after %.1fs',
@@ -456,11 +453,7 @@ async def run(
 
         if returncode != 0:
             stderr_text = '\n'.join(stderr_lines)
-            error_msg = (
-                parsed.get('result', '')
-                or stderr_text
-                or 'unknown error'
-            )
+            error_msg = parsed.get('result', '') or stderr_text or 'unknown error'
             log.error(
                 'Execution failed for %s/%s#%d (exit=%d): %s',
                 context.owner,
