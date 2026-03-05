@@ -8,7 +8,7 @@
 
 1. **Org not whitelisted** — The repo must belong to an org in `WHITELISTED_ORGS`. Check with `docker logs agent0 | grep 'non-whitelisted'`.
 
-2. **Notification reason not actionable** — Only `mention`, `assign`, `review_requested`, `ci_activity`, and `author` are processed. Reasons like `subscribed` or `comment` are silently dropped.
+2. **Notification reason not actionable** — Only `mention`, `assign`, `review_requested`, `ci_activity`, `author`, and `comment` are processed. Reasons like `subscribed` are silently dropped.
 
 3. **Already processed** — The poller deduplicates by `{notification_id: updated_at}`. If the notification's `updated_at` has not changed since last processing, it is skipped. A fresh poll (every 10th cycle) resets the `If-Modified-Since` cache but not the deduplication dict.
 

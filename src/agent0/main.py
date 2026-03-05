@@ -61,6 +61,7 @@ async def _run() -> None:
         host='0.0.0.0',
         port=config.port,
         log_level=config.log_level.lower(),
+        install_signal_handlers=False,
     )
     server = uvicorn.Server(server_config)
 
@@ -71,6 +72,7 @@ async def _run() -> None:
     def _signal_handler() -> None:
         log.info('Signal received, initiating shutdown')
         shutdown_event.set()
+        server.should_exit = True
 
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, _signal_handler)

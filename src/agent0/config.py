@@ -126,6 +126,7 @@ def load_config() -> Config:
     log_level = os.environ.get('LOG_LEVEL', 'INFO')
     data_dir = Path(os.environ.get('DATA_DIR', '/data'))
     port = int(os.environ.get('PORT', '9999'))
+    github_user = os.environ.get('GITHUB_USER', 'zero-bang')
 
     return Config(
         github_token=github_token,
@@ -137,4 +138,5 @@ def load_config() -> Config:
         log_level=log_level,
         data_dir=data_dir,
         port=port,
+        github_user=github_user,
     )

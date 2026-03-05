@@ -34,7 +34,7 @@ GitHub API  →  Poller  →  Router  →  Scheduler  →  Executor  →  GitHub
 | `ci_activity` | ✓ | CI checks completed on a thread the agent participates in |
 | `author` | ✓ | Activity on something the agent authored (e.g., review on agent's PR) |
 | `subscribed` | ✗ | Watching the repo — not actionable |
-| `comment` | ✗ | Not directly addressed to the agent |
+| `comment` | ✓ | New comment in a thread involving the agent |
 
 ## Step 3: Context Fetching
 
@@ -75,8 +75,9 @@ When the agent pushes code or leaves comments, GitHub generates notifications fo
 | `review_requested` | `review_request` | `_REVIEW_PR` |
 | `ci_activity` | `ci_failure` | `_CI_FAILURE` |
 | `author` | `mention` | `_MENTION_ISSUE` or `_MENTION_PR` |
+| `comment` | `mention` | `_MENTION_ISSUE` or `_MENTION_PR` |
 
-The `author` reason maps to `mention` because the agent treats activity on its own PRs the same way it treats being mentioned — read the latest context and respond.
+The `author` and `comment` reasons map to `mention` because the agent treats activity on its own PRs and threads the same way it treats being mentioned — read the latest context and respond.
 
 ## Step 6: Scheduling
 

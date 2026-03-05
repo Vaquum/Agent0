@@ -43,7 +43,7 @@ Notifications from any other org or user namespace are ignored.
 │   ┌──────────────┐    ┌──────────────┐                          │
 │   │   FastAPI    │    │  Dashboard   │                          │
 │   │   (API)      │    │  (Vite+TS)   │                          │
-│   │   :8000      │    │  static SPA  │                          │
+│   │   :9999      │    │  static SPA  │                          │
 │   └──────────────┘    └──────────────┘                          │
 │                                                                  │
 │   ┌──────────────────────────────────────────────────────────┐  │
@@ -126,7 +126,7 @@ The dashboard is split into a FastAPI backend (JSON API) and a TypeScript + Vite
 - `GET /api/tasks/running` — current running tasks from in-memory scheduler state
 - `GET /api/tasks/queued` — queued tasks from in-memory scheduler state
 - `GET /api/tasks/history` — past tasks from audit log files, paginated, newest first
-- Runs on port 8000 within the same asyncio event loop as the daemon
+- Runs on port 9999 within the same asyncio event loop as the daemon
 
 **Frontend (TypeScript + Vite)**:
 - Single-page application built with Vite
@@ -237,7 +237,7 @@ Agent0/
 - **Auto-deploy**: Yes (from `main` branch)
 - **Persistent disk**: 10 GB mounted at `/data`
 - **Build**: Docker
-- **Port**: 8000
+- **Port**: 9999
 - **Health check**: `GET /health`
 
 ### Dockerfile
