@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: agent0
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: WHITELISTED_ORGS
+        value: vaquum
+      - key: POLL_INTERVAL
+        value: "30"
+      - key: EXECUTOR_TIMEOUT
+        value: "600"
+      - key: MAX_TURNS
+        value: "100"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATA_DIR
+        value: /data
+      - key: GITHUB_USER
+        value: zero-bang
+    disk:
+      name: agent0-data
+      mountPath: /data
+      sizeGB: 10

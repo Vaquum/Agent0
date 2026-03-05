@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent0 Dashboard</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Agent0</h1>
+    <span id="status" class="status">connecting...</span>
+  </header>
+  <main>
+    <div class="panel panel-left">
+      <section>
+        <h2>Running</h2>
+        <div id="running" class="table-container">
+          <p class="empty">No running tasks</p>
+        </div>
+      </section>
+      <section>
+        <h2>Queued</h2>
+        <div id="queued" class="table-container">
+          <p class="empty">No queued tasks</p>
+        </div>
+      </section>
+      <section>
+        <h2>History</h2>
+        <div id="history" class="table-container">
+          <p class="empty">Loading...</p>
+        </div>
+        <div id="pagination" class="pagination"></div>
+      </section>
+    </div>
+    <div class="panel-divider" id="panel-divider"></div>
+    <div class="panel panel-right">
+      <div class="log-header">
+        <h2>Log</h2>
+        <select id="log-level">
+          <option value="DEBUG">DEBUG</option>
+          <option value="INFO" selected>INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="ERROR">ERROR</option>
+        </select>
+      </div>
+      <div id="log-output" class="log-output"></div>
+    </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
