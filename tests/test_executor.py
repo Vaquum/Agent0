@@ -72,7 +72,7 @@ class TestBuildPrompt:
         ctx = _make_context()
         prompt = _build_prompt(ctx, config)
 
-        assert 'You are zero-bang' in prompt
+        assert 'You are Agent0' in prompt
         assert 'testorg/myrepo' in prompt
         assert 'Never force push' in prompt
 
