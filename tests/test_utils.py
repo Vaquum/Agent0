@@ -22,6 +22,12 @@ class TestSanitizeBranchName:
         result = sanitize_branch_name(long_name)
         assert len(result) == 50
 
+    def test_special_chars_removed(self):
+        assert sanitize_branch_name('feat@#!name') == 'featname'
+
+    def test_collapses_dashes(self):
+        assert sanitize_branch_name('fix -- the -- bug') == 'fix-the-bug'
+
 
 class TestTruncateText:
 

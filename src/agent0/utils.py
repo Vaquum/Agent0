@@ -14,9 +14,15 @@ log = logging.getLogger(__name__)
 
 def sanitize_branch_name(name: str) -> str:
     """Convert a string to a valid git branch name."""
+    import re
+
     result = name.lower().strip()
     result = result.replace(' ', '-')
-    # Bug: doesn't handle special chars like @, #, !, etc.
+    # Remove characters not allowed in git branch names
+    result = re.sub(r'[^a-z0-9._/-]', '', result)
+    # Collapse multiple consecutive dashes/dots
+    result = re.sub(r'-{2,}', '-', result)
+    result = result.strip('-.')
     if len(result) > 50:
         result = result[:50]
     return result
@@ -71,11 +77,14 @@ def load_json_file(path: str) -> dict:
 
 def safe_get(data: dict, *keys: str, default: Any = None) -> Any:
     """Safely traverse nested dicts."""
+    _sentinel = object()
     current = data
     for key in keys:
         if not isinstance(current, dict):
             return default
-        current = current.get(key, default)
+        current = current.get(key, _sentinel)
+        if current is _sentinel:
+            return default
     return current
 
 
