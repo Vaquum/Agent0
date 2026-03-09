@@ -117,6 +117,8 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
             diff=context.diff or '(no diff available)',
             formatted_comments=formatted,
         )
+    elif context.event_type in ('self_reflection', 'self_reflection_rfc'):
+        body = context.trigger_text
     else:
         body = (
             f'Notification received with event type: {context.event_type}'
