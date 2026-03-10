@@ -8,12 +8,15 @@ import pytest
 
 from agent0.config import Config
 from agent0.reflector import (
+    REFLECTION_INTERVAL,
     Reflector,
     _extract_issue_url,
     _format_issue_comments,
     _format_pr_comments,
     _format_reviews,
     _parse_pr_key,
+    _parse_search_item,
+    _pr_key_from_search_item,
 )
 
 
@@ -27,27 +30,16 @@ def _make_config(tmp_path: Path) -> Config:
     )
 
 
-def _make_audit_entry(
-    event_type: str = 'review_request',
-    repo: str = 'vaquum/confab',
-    reference: int = 14,
+def _make_search_item(
+    owner: str = 'vaquum',
+    repo: str = 'confab',
+    number: int = 14,
 ) -> dict:
     return {
-        'timestamp': '2026-03-05T10:00:00+00:00',
-        'notification_id': 'notif-123',
-        'event_type': event_type,
-        'repo': repo,
-        'reference': reference,
-        'trigger_user': 'alice',
-        'trigger_text': 'review please',
-        'action_taken': event_type,
-        'status': 'success',
-        'response': 'LGTM',
-        'input_tokens': 1000,
-        'output_tokens': 500,
-        'cost_usd': 0.05,
-        'duration_seconds': 30.0,
-        'error': None,
+        'number': number,
+        'repository_url': f'https://api.github.com/repos/{owner}/{repo}',
+        'title': f'Test PR #{number}',
+        'html_url': f'https://github.com/{owner}/{repo}/pull/{number}',
     }
 
 
@@ -79,6 +71,33 @@ class TestParsePrKey:
         assert number == 0
 
 
+class TestPrKeyFromSearchItem:
+    def test_valid_item(self) -> None:
+        item = _make_search_item(owner='vaquum', repo='confab', number=14)
+        assert _pr_key_from_search_item(item) == 'vaquum/confab#14'
+
+    def test_missing_repo_url(self) -> None:
+        assert _pr_key_from_search_item({'number': 14}) == ''
+
+    def test_missing_number(self) -> None:
+        item = {'repository_url': 'https://api.github.com/repos/vaquum/confab'}
+        assert _pr_key_from_search_item(item) == ''
+
+
+class TestParseSearchItem:
+    def test_valid_item(self) -> None:
+        item = _make_search_item(owner='vaquum', repo='confab', number=14)
+        owner, repo, number = _parse_search_item(item)
+        assert owner == 'vaquum'
+        assert repo == 'confab'
+        assert number == 14
+
+    def test_missing_data(self) -> None:
+        owner, _repo, number = _parse_search_item({})
+        assert owner == ''
+        assert number == 0
+
+
 class TestLoadConsideredFromEmpty:
     def test_starts_empty(self, tmp_path: Path) -> None:
         config = _make_config(tmp_path)
@@ -97,9 +116,9 @@ class TestLoadConsideredFromExisting:
 
         reflections_file = tmp_path / 'reflections.jsonl'
         reflections_file.write_text(
-            json.dumps({'pr_key': 'vaquum/confab#14', 'dice_landed': False})
+            json.dumps({'pr_key': 'vaquum/confab#14', 'reflected': False})
             + '\n'
-            + json.dumps({'pr_key': 'vaquum/agent0#22', 'dice_landed': True})
+            + json.dumps({'pr_key': 'vaquum/agent0#22', 'reflected': True})
             + '\n',
             encoding='utf-8',
         )
@@ -115,8 +134,8 @@ class TestDeduplication:
         config = _make_config(tmp_path)
         reflector = Reflector(config, AsyncMock(), AsyncMock())
 
-        reflector._record_considered('vaquum/confab#14', dice_landed=False)
-        reflector._record_considered('vaquum/confab#14', dice_landed=False)
+        reflector._record_considered('vaquum/confab#14', reflected=False)
+        reflector._record_considered('vaquum/confab#14', reflected=False)
 
         assert len(reflector._considered) == 1
 
@@ -129,13 +148,13 @@ class TestRecordConsideredWritesJsonl:
         config = _make_config(tmp_path)
         reflector = Reflector(config, AsyncMock(), AsyncMock())
 
-        reflector._record_considered('vaquum/confab#14', dice_landed=False)
+        reflector._record_considered('vaquum/confab#14', reflected=False)
 
         file_path = tmp_path / 'reflections.jsonl'
         assert file_path.exists()
         data = json.loads(file_path.read_text(encoding='utf-8').strip())
         assert data['pr_key'] == 'vaquum/confab#14'
-        assert data['dice_landed'] is False
+        assert data['reflected'] is False
         assert 'timestamp' in data
 
     def test_writes_rfc_url(self, tmp_path: Path) -> None:
@@ -144,7 +163,7 @@ class TestRecordConsideredWritesJsonl:
 
         reflector._record_considered(
             'vaquum/confab#14',
-            dice_landed=True,
+            reflected=True,
             rfc_issue_url='https://github.com/Vaquum/Agent0/issues/25',
         )
 
@@ -152,82 +171,143 @@ class TestRecordConsideredWritesJsonl:
         assert data['rfc_issue_url'] == 'https://github.com/Vaquum/Agent0/issues/25'
 
 
-class TestSkipNonReviewEntries:
-    def test_only_review_request_entries(self, tmp_path: Path) -> None:
-        config = _make_config(tmp_path)
-        audit_dir = tmp_path / 'audit'
-        audit_dir.mkdir()
-
-        entries = [
-            _make_audit_entry(event_type='mention', repo='vaquum/confab', reference=10),
-            _make_audit_entry(event_type='review_request', repo='vaquum/confab', reference=14),
-            _make_audit_entry(event_type='assignment', repo='vaquum/confab', reference=15),
-            _make_audit_entry(event_type='ci_failure', repo='vaquum/confab', reference=14),
-        ]
-
-        audit_file = audit_dir / '2026-03-05.jsonl'
-        audit_file.write_text(
-            '\n'.join(json.dumps(e) for e in entries) + '\n',
-            encoding='utf-8',
-        )
-
-        reflector = Reflector(config, AsyncMock(), AsyncMock())
-        pr_keys = reflector._find_review_pr_keys()
-
-        assert pr_keys == ['vaquum/confab#14']
-
-
-class TestSkipOpenPR:
+class TestScanBelowThreshold:
     @pytest.mark.asyncio
-    async def test_does_not_reflect_on_open_pr(self, tmp_path: Path) -> None:
+    async def test_no_reflection_below_interval(self, tmp_path: Path) -> None:
         config = _make_config(tmp_path)
-        audit_dir = tmp_path / 'audit'
-        audit_dir.mkdir()
-
-        entry = _make_audit_entry(event_type='review_request', repo='vaquum/confab', reference=14)
-        audit_file = audit_dir / '2026-03-05.jsonl'
-        audit_file.write_text(json.dumps(entry) + '\n', encoding='utf-8')
-
         mock_client = AsyncMock()
-        mock_client.get_pull_request = AsyncMock(return_value={'state': 'open'})
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(
+            return_value=[_make_search_item(number=i) for i in range(1, 4)]
+        )
 
         reflector = Reflector(config, mock_client, AsyncMock())
 
-        with patch('agent0.reflector.random') as mock_random:
+        with patch.object(reflector, '_reflect', new_callable=AsyncMock) as mock_reflect:
             await reflector.scan()
-            mock_random.randint.assert_not_called()
+            mock_reflect.assert_not_called()
 
-        assert 'vaquum/confab#14' not in reflector._considered
+        assert len(reflector._considered) == 0
 
 
-class TestReflectionTriggered:
+class TestScanTriggersAtThreshold:
     @pytest.mark.asyncio
-    async def test_closed_pr_dice_lands_calls_reflect(self, tmp_path: Path) -> None:
+    async def test_reflects_at_interval(self, tmp_path: Path) -> None:
         config = _make_config(tmp_path)
-        audit_dir = tmp_path / 'audit'
-        audit_dir.mkdir()
-
-        entry = _make_audit_entry(event_type='review_request', repo='vaquum/confab', reference=14)
-        audit_file = audit_dir / '2026-03-05.jsonl'
-        audit_file.write_text(json.dumps(entry) + '\n', encoding='utf-8')
-
         mock_client = AsyncMock()
-        mock_client.get_pull_request = AsyncMock(return_value={'state': 'closed'})
+        items = [_make_search_item(number=i) for i in range(1, REFLECTION_INTERVAL + 1)]
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(return_value=items)
+
+        reflector = Reflector(config, mock_client, AsyncMock())
+
+        with patch.object(
+            reflector, '_reflect', new_callable=AsyncMock, return_value=None
+        ) as mock_reflect:
+            await reflector.scan()
+            mock_reflect.assert_called_once()
+
+        assert len(reflector._considered) == REFLECTION_INTERVAL
+
+
+class TestScanMarksAllConsidered:
+    @pytest.mark.asyncio
+    async def test_all_prs_considered_after_trigger(self, tmp_path: Path) -> None:
+        config = _make_config(tmp_path)
+        mock_client = AsyncMock()
+        items = [_make_search_item(number=i) for i in range(1, 10)]
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(return_value=items)
+
+        reflector = Reflector(config, mock_client, AsyncMock())
+
+        with patch.object(reflector, '_reflect', new_callable=AsyncMock, return_value=None):
+            await reflector.scan()
+
+        assert len(reflector._considered) == 9
+
+
+class TestScanSkipsAlreadyConsidered:
+    @pytest.mark.asyncio
+    async def test_already_considered_not_counted(self, tmp_path: Path) -> None:
+        config = _make_config(tmp_path)
+        mock_client = AsyncMock()
+        items = [_make_search_item(number=i) for i in range(1, 7)]
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(return_value=items)
+
+        reflector = Reflector(config, mock_client, AsyncMock())
+        # Pre-mark 4 as already considered
+        for i in range(1, 5):
+            reflector._considered.add(f'vaquum/confab#{i}')
+
+        with patch.object(reflector, '_reflect', new_callable=AsyncMock) as mock_reflect:
+            await reflector.scan()
+            # Only 2 new (5 and 6), below threshold of 6
+            mock_reflect.assert_not_called()
+
+
+class TestScanReflectFailureDoesNotRecord:
+    @pytest.mark.asyncio
+    async def test_reflect_exception_leaves_prs_unconsidered(self, tmp_path: Path) -> None:
+        config = _make_config(tmp_path)
+        mock_client = AsyncMock()
+        items = [_make_search_item(number=i) for i in range(1, REFLECTION_INTERVAL + 1)]
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(return_value=items)
 
         reflector = Reflector(config, mock_client, AsyncMock())
 
         with (
-            patch('agent0.reflector.random') as mock_random,
             patch.object(
-                reflector, '_reflect', new_callable=AsyncMock, return_value=None
-            ) as mock_reflect,
+                reflector,
+                '_reflect',
+                new_callable=AsyncMock,
+                side_effect=RuntimeError('executor crashed'),
+            ),
+            pytest.raises(RuntimeError, match='executor crashed'),
         ):
-            mock_random.randint.return_value = 1
             await reflector.scan()
 
-            mock_reflect.assert_called_once_with('vaquum', 'confab', 14)
+        assert len(reflector._considered) == 0
 
-        assert 'vaquum/confab#14' in reflector._considered
+
+class TestScanMultipleOrgs:
+    @pytest.mark.asyncio
+    async def test_searches_each_whitelisted_org(self, tmp_path: Path) -> None:
+        config = Config(
+            github_token='test-token',
+            anthropic_api_key='test-key',
+            github_user='zero-bang',
+            whitelisted_orgs=('orgA', 'orgB'),
+            data_dir=tmp_path,
+        )
+        mock_client = AsyncMock()
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(return_value=[])
+
+        reflector = Reflector(config, mock_client, AsyncMock())
+        await reflector.scan()
+
+        assert mock_client.search_merged_prs_reviewed_by.call_count == 2
+        calls = mock_client.search_merged_prs_reviewed_by.call_args_list
+        assert calls[0].args == ('zero-bang', 'orgA')
+        assert calls[1].args == ('zero-bang', 'orgB')
+
+
+class TestScanRecordsRfcUrl:
+    @pytest.mark.asyncio
+    async def test_rfc_url_recorded_for_target(self, tmp_path: Path) -> None:
+        config = _make_config(tmp_path)
+        mock_client = AsyncMock()
+        items = [_make_search_item(number=i) for i in range(1, REFLECTION_INTERVAL + 1)]
+        mock_client.search_merged_prs_reviewed_by = AsyncMock(return_value=items)
+
+        reflector = Reflector(config, mock_client, AsyncMock())
+        rfc_url = 'https://github.com/Vaquum/Agent0/issues/99'
+
+        with patch.object(reflector, '_reflect', new_callable=AsyncMock, return_value=rfc_url):
+            await reflector.scan()
+
+        lines = (tmp_path / 'reflections.jsonl').read_text(encoding='utf-8').strip().splitlines()
+        entries = [json.loads(line) for line in lines]
+        reflected_entries = [e for e in entries if e.get('reflected')]
+        assert len(reflected_entries) == 1
+        assert reflected_entries[0]['rfc_issue_url'] == rfc_url
 
 
 class TestExtractIssueUrl:

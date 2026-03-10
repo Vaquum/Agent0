@@ -1,7 +1,8 @@
-"""Self-reflection engine for post-mortem learning on closed PRs.
+"""Self-reflection engine for post-mortem learning on merged PRs.
 
-Scans audit logs for completed PR reviews, checks if the PR is closed,
-dice-rolls (1-in-6), and runs a two-phase reflection that creates an
+Queries GitHub Search API for merged PRs that Agent0 reviewed,
+counts new ones since the last scan, and triggers a two-phase
+reflection every REFLECTION_INTERVAL merged PRs. Creates an
 RFC issue on the Agent0 repository.
 """
 
@@ -25,25 +26,26 @@ from agent0.workspace import WorkspaceManager
 if TYPE_CHECKING:
     from agent0.daemon import Scheduler
 
-__all__ = ['REFLECTION_SCAN_INTERVAL', 'Reflector']
+__all__ = ['REFLECTION_INTERVAL', 'REFLECTION_SCAN_INTERVAL', 'Reflector']
 
 log = logging.getLogger(__name__)
 
 REFLECTION_SCAN_INTERVAL = 20
 """Run reflection scan every N polls (~10 min at 30s interval)."""
 
-DICE_SIDES = 6
-"""1-in-N chance of triggering reflection on a closed PR."""
+REFLECTION_INTERVAL = 6
+"""Trigger one reflection for every N new merged PRs reviewed."""
 
 _RFC_TEMPLATE_PATH = '.github/ISSUE_TEMPLATE/rfc-template.md'
 
 
 class Reflector:
     """
-    Compute post-mortem self-reflection on closed PRs.
+    Compute post-mortem self-reflection on merged PRs.
 
-    Scans audit logs for review_request entries, checks if the PR
-    is now closed, dice-rolls, and runs a two-phase reflection.
+    Queries GitHub for merged PRs that Agent0 reviewed, accumulates
+    new ones, and triggers a two-phase reflection every
+    REFLECTION_INTERVAL merged PRs.
 
     Args:
         config (Config): Application configuration
@@ -92,7 +94,7 @@ class Reflector:
     def _record_considered(
         self,
         pr_key: str,
-        dice_landed: bool,
+        reflected: bool,
         rfc_issue_url: str | None = None,
     ) -> None:
         """
@@ -100,7 +102,7 @@ class Reflector:
 
         Args:
             pr_key (str): PR identifier in owner/repo#number format
-            dice_landed (bool): Whether the dice roll triggered reflection
+            reflected (bool): Whether reflection was triggered for this PR
             rfc_issue_url (str | None): URL of the created RFC issue, if any
 
         Returns:
@@ -110,7 +112,7 @@ class Reflector:
         entry: dict[str, Any] = {
             'pr_key': pr_key,
             'timestamp': datetime.now(UTC).isoformat(),
-            'dice_landed': dice_landed,
+            'reflected': reflected,
         }
         if rfc_issue_url:
             entry['rfc_issue_url'] = rfc_issue_url
@@ -126,94 +128,56 @@ class Reflector:
 
     async def scan(self) -> None:
         """
-        Compute scan of audit logs for reflection candidates.
+        Compute scan for reflection candidates via GitHub Search API.
 
-        Reads recent audit entries, filters for review_request events,
-        checks if the PR is closed, dice-rolls, and triggers reflection.
+        Queries merged PRs that Agent0 reviewed across whitelisted orgs,
+        filters out already-considered PRs, and triggers reflection when
+        REFLECTION_INTERVAL new merged PRs have accumulated.
 
         Returns:
             None
         """
 
-        pr_keys = self._find_review_pr_keys()
+        merged_prs: list[dict[str, Any]] = []
+        for org in self._config.whitelisted_orgs:
+            items = await self._client.search_merged_prs_reviewed_by(self._config.github_user, org)
+            merged_prs.extend(items)
 
-        for pr_key in pr_keys:
-            if pr_key in self._considered:
-                continue
+        new_prs = [pr for pr in merged_prs if _pr_key_from_search_item(pr) not in self._considered]
 
-            owner, repo, number = _parse_pr_key(pr_key)
-            if not owner:
-                continue
-
-            try:
-                pr = await self._client.get_pull_request(owner, repo, number)
-            except Exception:
-                log.debug('Reflection scan: could not fetch PR %s', pr_key)
-                continue
-
-            state = pr.get('state', '')
-            if state != 'closed':
-                continue
-
-            dice = random.randint(1, DICE_SIDES)
-            landed = dice == 1
+        if len(new_prs) < REFLECTION_INTERVAL:
             log.info(
-                'Reflection dice for %s: %d/%d %s',
-                pr_key,
-                dice,
-                DICE_SIDES,
-                '→ reflecting' if landed else '→ skip',
+                'Reflection scan: %d new merged PRs, need %d to trigger',
+                len(new_prs),
+                REFLECTION_INTERVAL,
             )
+            return
 
-            if landed:
-                rfc_url = await self._reflect(owner, repo, number)
-                self._record_considered(pr_key, dice_landed=True, rfc_issue_url=rfc_url)
-            else:
-                self._record_considered(pr_key, dice_landed=False)
+        target = random.choice(new_prs)
+        target_key = _pr_key_from_search_item(target)
+        owner, repo, number = _parse_search_item(target)
 
-    def _find_review_pr_keys(self) -> list[str]:
-        """
-        Compute unique PR keys from audit log review_request entries.
+        if not owner:
+            log.warning('Reflection scan: could not parse target PR from search results')
+            return
 
-        Returns:
-            list[str]: Unique PR keys in owner/repo#number format
-        """
+        log.info(
+            'Reflection scan: %d new merged PRs >= %d, reflecting on %s',
+            len(new_prs),
+            REFLECTION_INTERVAL,
+            target_key,
+        )
 
-        audit_dir = self._config.audit_dir
-        if not audit_dir.exists():
-            return []
+        rfc_url = await self._reflect(owner, repo, number)
 
-        pr_keys: list[str] = []
-        seen: set[str] = set()
-
-        for file_path in sorted(audit_dir.glob('*.jsonl'), reverse=True):
-            try:
-                text = file_path.read_text(encoding='utf-8')
-            except OSError:
-                continue
-
-            for line in text.strip().splitlines():
-                if not line.strip():
-                    continue
-                try:
-                    entry = json.loads(line)
-                except (json.JSONDecodeError, TypeError):
-                    continue
-
-                if entry.get('event_type') != 'review_request':
-                    continue
-
-                repo_str = entry.get('repo', '')
-                reference = entry.get('reference', 0)
-                if not repo_str or not reference:
-                    continue
-
-                pr_key = f'{repo_str}#{reference}'
-                if pr_key not in seen:
-                    seen.add(pr_key)
-                    pr_keys.append(pr_key)
-
-        return pr_keys
+        for pr in new_prs:
+            key = _pr_key_from_search_item(pr)
+            is_target = key == target_key
+            self._record_considered(
+                key,
+                reflected=is_target,
+                rfc_issue_url=rfc_url if is_target else None,
+            )
 
     async def _gather_context(self, owner: str, repo: str, number: int) -> str:
         """
@@ -450,6 +414,54 @@ def _parse_pr_key(pr_key: str) -> tuple[str, str, int]:
         return '', '', 0
 
     return owner, repo, number
+
+
+def _pr_key_from_search_item(item: dict[str, Any]) -> str:
+    """
+    Compute PR key from a GitHub Search API issue item.
+
+    Args:
+        item (dict[str, Any]): Search result item from /search/issues
+
+    Returns:
+        str: PR key in owner/repo#number format, or empty string on failure
+    """
+
+    repo_url = item.get('repository_url', '')
+    number = item.get('number', 0)
+    if not repo_url or not number:
+        return ''
+
+    parts = repo_url.rstrip('/').split('/')
+    if len(parts) < 2:
+        return ''
+
+    owner = parts[-2]
+    repo = parts[-1]
+    return f'{owner}/{repo}#{number}'
+
+
+def _parse_search_item(item: dict[str, Any]) -> tuple[str, str, int]:
+    """
+    Compute owner, repo, and number from a GitHub Search API issue item.
+
+    Args:
+        item (dict[str, Any]): Search result item from /search/issues
+
+    Returns:
+        tuple[str, str, int]: Owner, repo, number (empty/0 on parse failure)
+    """
+
+    repo_url = item.get('repository_url', '')
+    number = item.get('number', 0)
+    if not repo_url or not number:
+        return '', '', 0
+
+    parts = repo_url.rstrip('/').split('/')
+    if len(parts) < 2:
+        return '', '', 0
+
+    return parts[-2], parts[-1], number
 
 
 def _agent0_repo_parts(config: Config) -> tuple[str, str]:
