@@ -131,8 +131,10 @@ class Reflector:
         Compute scan for reflection candidates via GitHub Search API.
 
         Queries merged PRs that Agent0 reviewed across whitelisted orgs,
-        filters out already-considered PRs, and triggers reflection when
-        REFLECTION_INTERVAL new merged PRs have accumulated.
+        filters out already-considered PRs, and triggers at most one
+        reflection per scan when at least REFLECTION_INTERVAL new merged
+        PRs have accumulated. All new PRs in the batch are then recorded
+        as considered.
 
         Returns:
             None
@@ -143,7 +145,14 @@ class Reflector:
             items = await self._client.search_merged_prs_reviewed_by(self._config.github_user, org)
             merged_prs.extend(items)
 
-        new_prs = [pr for pr in merged_prs if _pr_key_from_search_item(pr) not in self._considered]
+        unique_new: dict[str, dict[str, Any]] = {}
+        for pr in merged_prs:
+            key = _pr_key_from_search_item(pr)
+            if not key or key in self._considered or key in unique_new:
+                continue
+            unique_new[key] = pr
+
+        new_prs = list(unique_new.values())
 
         if len(new_prs) < REFLECTION_INTERVAL:
             log.info(

@@ -10,13 +10,13 @@ After reading this, you will understand when reflections happen, what they produ
 
 After Agent0 reviews and merges enough PRs, it automatically selects one and performs a post-mortem reflection. The reflection produces an RFC (Request for Comments) issue on the Agent0 repository with observations and proposed improvements.
 
-**Trigger:** One reflection fires for every 6 merged PRs that Agent0 reviewed. The check runs approximately every 10 minutes.
+**Trigger:** A reflection scan runs approximately every 10 minutes. If at least 6 new merged PRs that Agent0 reviewed have accumulated since the last reflection, one reflection is fired for that batch.
 
 **Output:** A GitHub issue using the RFC template, filed on the Agent0 repository.
 
 ## What Gets Reflected On
 
-Agent0 tracks merged PRs across all whitelisted organizations. When 6 new merged PRs accumulate since the last reflection, it picks one at random and reflects on it. The reflection examines:
+Agent0 tracks merged PRs across all whitelisted organizations. When at least 6 new merged PRs have accumulated since the last reflection scan, it picks one of those PRs at random and reflects on it. Any additional PRs beyond that first batch of 6 are considered as part of the same scan and will not trigger extra reflections until more PRs are merged. The reflection examines:
 
 - The PR description and code changes
 - Reviews and inline comments

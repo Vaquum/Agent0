@@ -400,6 +400,8 @@ class GitHubClient:
             '/search/issues',
             params={
                 'q': f'reviewed-by:{reviewer} type:pr is:merged user:{org}',
+                'sort': 'updated',
+                'order': 'desc',
                 'per_page': '100',
             },
         )

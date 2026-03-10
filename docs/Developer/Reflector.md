@@ -38,7 +38,7 @@ Each scan:
 5. Runs two-phase reflection on the target
 6. Records **all** new PRs as considered (resets the counter)
 
-This is deterministic in the sense that exactly one reflection fires for every 6 merged PRs. The only randomness is which PR gets reflected on.
+This means at most one reflection is triggered per scan, and only when there are at least 6 new merged PRs; after that reflection, all new PRs from that scan are recorded as considered. The only randomness is which PR gets reflected on.
 
 **Failure handling:** If `_reflect()` raises, the exception propagates and nothing is recorded. The same PRs will be re-discovered on the next scan, ensuring the reflection is retried.
 
@@ -74,7 +74,7 @@ On startup, `_load_considered()` reads this file into an in-memory `set[str]` fo
 ## GitHub API Query
 
 ```
-GET /search/issues?q=reviewed-by:{user}+type:pr+is:merged+user:{org}&per_page=100
+GET /search/issues?q=reviewed-by:{user}+type:pr+is:merged+user:{org}&sort=updated&order=desc&per_page=100
 ```
 
 This returns up to 100 merged PRs that the agent reviewed within a specific org. The search is repeated for each whitelisted org.
