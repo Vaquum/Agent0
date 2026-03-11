@@ -201,7 +201,8 @@ async def read_entry_output(
                     if not isinstance(output, list):
                         return None
                     return [str(entry) for entry in output]
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, TypeError) as exc:
+                    log.warning('Skipping malformed audit line in %s: %s', file_path, exc)
                     continue
 
         return None

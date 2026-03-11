@@ -417,7 +417,10 @@ class Daemon:
                         try:
                             await self._poller.mark_read(notification.get('id', ''))
                         except Exception:
-                            pass
+                            log.warning(
+                                'Failed to mark skipped notification %s as read',
+                                notification.get('id'),
+                            )
                         continue
 
                     reason = notification.get('reason', '')
@@ -427,7 +430,10 @@ class Daemon:
                         try:
                             await self._poller.mark_read(notification.get('id', ''))
                         except Exception:
-                            pass
+                            log.warning(
+                                'Failed to mark self-triggered notification %s as read',
+                                notification.get('id'),
+                            )
                         continue
 
                     task = classify(notification, context, self._config)

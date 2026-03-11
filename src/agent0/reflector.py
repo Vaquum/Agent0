@@ -234,6 +234,12 @@ class Reflector:
                     ci_parts.append(f'- {app_name}: {conclusion}')
                 ci_summary = '\n'.join(ci_parts) if ci_parts else '(no CI data)'
             except Exception:
+                log.warning(
+                    'Could not fetch CI data for %s/%s@%s',
+                    owner,
+                    repo,
+                    head_sha[:8],
+                )
                 ci_summary = '(could not fetch CI data)'
 
         outcome = 'merged' if merged else 'closed without merge'
