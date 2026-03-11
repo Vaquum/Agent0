@@ -1,5 +1,11 @@
 # Executor
 
+**Status:** Stable
+
+**Context:** Executor module internals — prompt building, subprocess management, output parsing. Intended for engineers debugging task execution or modifying CLI integration.
+
+**Outcome:** After reading, you can trace a task from prompt construction through CLI execution to result parsing.
+
 The executor is the bridge between Agent0's notification pipeline and Claude Code CLI. It builds prompts, spawns subprocesses, streams output, and parses results.
 
 ## Claude Code CLI

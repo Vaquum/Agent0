@@ -1,5 +1,11 @@
 # Dashboard
 
+**Status:** Stable
+
+**Context:** Dashboard architecture and API surface. Intended for engineers working on the frontend or API layer.
+
+**Outcome:** After reading, you can modify the dashboard UI, extend the API, or debug live-streaming issues.
+
 The dashboard is a single-page application that provides real-time visibility into Agent0's operations. It shows running tasks, queued tasks, execution history, and live logs.
 
 ## Frontend Stack

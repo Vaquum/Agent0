@@ -29,7 +29,7 @@ make dev
 2) Checking the dashboard
 
 ```bash
-curl http://localhost:9998/health
+curl http://localhost:9999/health
 ```
 
 3) Triggering Agent0
@@ -38,7 +38,7 @@ curl http://localhost:9998/health
 @your-agent-github-user please fix the typo in README.md
 ```
 
-For complete setup, configuration, and deployment instructions, see [Get Started](docs/Developer/Get-Started.md).
+For complete setup, configuration, and deployment instructions, see [Get Started](docs/Developer/Setup.md).
 
 # Contributing
 
@@ -47,7 +47,7 @@ The simplest way to contribute is by joining open discussions or picking up an i
 - [Open discussions](https://github.com/Vaquum/Agent0/issues?q=is%3Aissue%20state%3Aopen%20label%3Aquestion%2Fdiscussion)
 - [Open issues](https://github.com/Vaquum/Agent0/issues)
 
-Before contributing, start with [Get Started](docs/Developer/Get-Started.md).
+Before contributing, start with [Get Started](docs/Developer/Setup.md).
 
 # Vulnerabilities
 

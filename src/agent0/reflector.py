@@ -89,7 +89,7 @@ class Reflector:
                 except (json.JSONDecodeError, TypeError):
                     continue
         except OSError:
-            log.warning('Could not read reflections file: %s', self._reflections_file)
+            log.warning('E5002: Could not read reflections file: %s', self._reflections_file)
 
     def _record_considered(
         self,
@@ -124,7 +124,7 @@ class Reflector:
             with open(self._reflections_file, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + '\n')
         except OSError:
-            log.warning('Could not write to reflections file: %s', self._reflections_file)
+            log.warning('E5003: Could not write to reflections file: %s', self._reflections_file)
 
     async def scan(self) -> None:
         """
@@ -167,7 +167,7 @@ class Reflector:
         owner, repo, number = _parse_search_item(target)
 
         if not owner:
-            log.warning('Reflection scan: could not parse target PR from search results')
+            log.warning('E6003: Reflection scan: could not parse target PR from search results')
             return
 
         log.info(
@@ -234,6 +234,12 @@ class Reflector:
                     ci_parts.append(f'- {app_name}: {conclusion}')
                 ci_summary = '\n'.join(ci_parts) if ci_parts else '(no CI data)'
             except Exception:
+                log.warning(
+                    'Could not fetch CI data for %s/%s@%s',
+                    owner,
+                    repo,
+                    head_sha[:8],
+                )
                 ci_summary = '(could not fetch CI data)'
 
         outcome = 'merged' if merged else 'closed without merge'
@@ -331,7 +337,7 @@ class Reflector:
 
             reflection_output = phase1_result.response or phase1_result.raw_output
             if not reflection_output or not reflection_output.strip():
-                log.warning('Phase 1 produced no output for %s/%s#%d', owner, repo, number)
+                log.warning('E6001: Phase 1 produced no output for %s/%s#%d', owner, repo, number)
                 return None
 
             log.info(
@@ -391,38 +397,9 @@ class Reflector:
         if rfc_url:
             log.info('RFC created: %s', rfc_url)
         else:
-            log.warning('Could not extract RFC issue URL from phase 2 output')
+            log.warning('E6002: Could not extract RFC issue URL from phase 2 output')
 
         return rfc_url
-
-
-def _parse_pr_key(pr_key: str) -> tuple[str, str, int]:
-    """
-    Compute owner, repo, and number from a PR key.
-
-    Args:
-        pr_key (str): PR key in owner/repo#number format
-
-    Returns:
-        tuple[str, str, int]: Owner, repo, number (empty/0 on parse failure)
-    """
-
-    if '#' not in pr_key:
-        return '', '', 0
-
-    repo_part, number_str = pr_key.rsplit('#', 1)
-
-    if '/' not in repo_part:
-        return '', '', 0
-
-    owner, repo = repo_part.split('/', 1)
-
-    try:
-        number = int(number_str)
-    except ValueError:
-        return '', '', 0
-
-    return owner, repo, number
 
 
 def _pr_key_from_search_item(item: dict[str, Any]) -> str:

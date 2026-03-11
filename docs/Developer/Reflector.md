@@ -104,7 +104,6 @@ Search result items contain `repository_url` (`https://api.github.com/repos/owne
 |----------|---------|-------------|
 | `_pr_key_from_search_item(item)` | `str` | Extract `owner/repo#number` from search result |
 | `_parse_search_item(item)` | `tuple[str, str, int]` | Extract (owner, repo, number) from search result |
-| `_parse_pr_key(pr_key)` | `tuple[str, str, int]` | Parse `owner/repo#number` string |
 | `_gather_context(owner, repo, number)` | `str` | Fetch full PR context as markdown |
 | `_reflect(owner, repo, number)` | `str \| None` | Run two-phase reflection, return RFC URL |
 | `_extract_issue_url(result)` | `str \| None` | Parse RFC URL from executor output |

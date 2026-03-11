@@ -14,7 +14,6 @@ from agent0.reflector import (
     _format_issue_comments,
     _format_pr_comments,
     _format_reviews,
-    _parse_pr_key,
     _parse_search_item,
     _pr_key_from_search_item,
 )
@@ -41,34 +40,6 @@ def _make_search_item(
         'title': f'Test PR #{number}',
         'html_url': f'https://github.com/{owner}/{repo}/pull/{number}',
     }
-
-
-class TestParsePrKey:
-    def test_valid_key(self) -> None:
-        owner, repo, number = _parse_pr_key('vaquum/confab#14')
-        assert owner == 'vaquum'
-        assert repo == 'confab'
-        assert number == 14
-
-    def test_no_hash(self) -> None:
-        owner, _repo, number = _parse_pr_key('vaquum/confab')
-        assert owner == ''
-        assert number == 0
-
-    def test_no_slash(self) -> None:
-        owner, _repo, number = _parse_pr_key('confab#14')
-        assert owner == ''
-        assert number == 0
-
-    def test_non_numeric_number(self) -> None:
-        owner, _repo, number = _parse_pr_key('vaquum/confab#abc')
-        assert owner == ''
-        assert number == 0
-
-    def test_empty_string(self) -> None:
-        owner, _repo, number = _parse_pr_key('')
-        assert owner == ''
-        assert number == 0
 
 
 class TestPrKeyFromSearchItem:

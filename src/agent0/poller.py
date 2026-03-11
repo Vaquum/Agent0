@@ -567,7 +567,7 @@ class Poller:
                     org,
                 )
             except Exception:
-                log.debug('CI scan: search failed for org %s', org)
+                log.warning('E2002: CI scan: search failed for org %s', org)
                 continue
 
             for item in items:
@@ -583,6 +583,7 @@ class Poller:
                 try:
                     pr = await self._client.get_pull_request(owner, repo, number)
                 except Exception:
+                    log.warning('E2002: CI scan: failed to fetch PR %s/%s#%d', owner, repo, number)
                     continue
 
                 head_sha = pr.get('head', {}).get('sha', '')
@@ -599,6 +600,12 @@ class Poller:
                         head_sha,
                     )
                 except Exception:
+                    log.warning(
+                        'E2002: CI scan: failed to fetch check suites for %s/%s@%s',
+                        owner,
+                        repo,
+                        head_sha[:8],
+                    )
                     continue
 
                 if not suites:

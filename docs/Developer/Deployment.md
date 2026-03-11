@@ -1,5 +1,11 @@
 # Deployment
 
+**Status:** Stable
+
+**Context:** Deployment architecture and configuration for Agent0 on Render. Intended for engineers managing production deployments.
+
+**Outcome:** After reading, you can deploy, update, and troubleshoot Agent0 in a Render environment.
+
 Agent0 is deployed on Render (Frankfurt region) as a Docker web service with persistent disk storage.
 
 ## Docker Build

@@ -1,5 +1,11 @@
 # Behavioral Contracts
 
+**Status:** Stable
+
+**Context:** Defines the behavioral contracts for Agent0's four core behaviors. Intended for engineers writing tests or validating behavior.
+
+**Outcome:** After reading, you can verify each behavior's expected inputs, outputs, and side-effects.
+
 Agent0 has four atomic behaviors. Each behavior is triggered by a GitHub notification and produces observable side-effects on the repository. This document defines the expected contract for each behavior and provides a runbook for manual validation.
 
 ## Behaviors

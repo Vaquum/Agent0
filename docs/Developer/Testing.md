@@ -1,5 +1,11 @@
 # Testing
 
+**Status:** Stable
+
+**Context:** Test infrastructure, conventions, and how to run the test suite. Intended for engineers writing or debugging tests.
+
+**Outcome:** After reading, you can run all tests, add new test cases, and understand the test organization.
+
 ## Running Tests
 
 ```bash

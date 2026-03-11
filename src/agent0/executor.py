@@ -417,7 +417,7 @@ async def run(
         except TimeoutError:
             duration = time.monotonic() - start_time
             log.error(
-                'Execution timed out for %s/%s#%d after %.1fs',
+                'E4002: Execution timed out for %s/%s#%d after %.1fs',
                 context.owner,
                 context.repo,
                 context.number,
@@ -457,7 +457,7 @@ async def run(
             stderr_text = '\n'.join(stderr_lines)
             error_msg = parsed.get('result', '') or stderr_text or 'unknown error'
             log.error(
-                'Execution failed for %s/%s#%d (exit=%d): %s',
+                'E4003: Execution failed for %s/%s#%d (exit=%d): %s',
                 context.owner,
                 context.repo,
                 context.number,
@@ -478,7 +478,7 @@ async def run(
 
         if parsed.get('is_error'):
             log.warning(
-                'Execution completed for %s/%s#%d (exit=0, %.1fs) '
+                'E4004: Execution completed for %s/%s#%d (exit=0, %.1fs) '
                 'but result parsing failed; raw output: %d chars, %d lines',
                 context.owner,
                 context.repo,
@@ -515,7 +515,7 @@ async def run(
         if slave_fd is not None:
             os.close(slave_fd)
         duration = time.monotonic() - start_time
-        log.error('Claude Code CLI not found — is it installed?')
+        log.error('E4001: Claude Code CLI not found — is it installed?')
         return ExecutorResult(
             status='failure',
             response=None,

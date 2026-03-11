@@ -1,5 +1,11 @@
 # Configuration
 
+**Status:** Stable
+
+**Context:** Configuration system for Agent0. Intended for engineers setting up or modifying environment variables.
+
+**Outcome:** After reading, you can configure all required and optional environment variables for any deployment environment.
+
 All configuration is loaded from environment variables at startup via `config.load_config()`. The result is a frozen `Config` dataclass — immutable for the lifetime of the process.
 
 ## Environment Variables

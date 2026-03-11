@@ -1,5 +1,11 @@
 # Architecture
 
+**Status:** Stable
+
+**Context:** High-level system architecture for Agent0. Intended for engineers who need to understand the system layers and how components interact.
+
+**Outcome:** After reading, you can trace a notification through the system and understand the responsibility of each layer.
+
 ## System Layers
 
 Agent0 has four layers, each with a single responsibility:
