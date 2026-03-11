@@ -474,6 +474,19 @@ class TestIsReviewerNoise:
         context = {'subject_type': 'PullRequest', 'pr_author': 'Test-Bot'}
         assert not is_reviewer_noise(notification, context, config)
 
+    def test_unknown_reason_is_not_noise(self) -> None:
+        """
+        Compute that an unknown reason on a non-authored PR passes through.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'subscribed'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert not is_reviewer_noise(notification, context, config)
+
 
 class TestFormatComments:
     def test_empty_comments(self) -> None:

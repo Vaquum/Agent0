@@ -170,7 +170,7 @@ def is_reviewer_noise(
         return False
 
     reason = notification.get('reason', '')
-    return reason not in ('review_requested', 'mention', 'assign')
+    return reason in ('comment', 'author', 'ci_activity')
 
 
 def format_comments(comments: list[dict[str, Any]]) -> str:
