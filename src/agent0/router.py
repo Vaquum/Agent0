@@ -5,7 +5,7 @@ from typing import Any
 
 from agent0.config import Config
 
-__all__ = ['TaskContext', 'classify', 'should_process']
+__all__ = ['TaskContext', 'classify', 'is_reviewer_noise', 'should_process']
 
 log = logging.getLogger(__name__)
 
@@ -136,6 +136,41 @@ def is_self_triggered(context: dict[str, Any], config: Config) -> bool:
 
     actor = _as_str(context.get('actor', ''))
     return actor.lower() == config.github_user.lower()
+
+
+def is_reviewer_noise(
+    notification: dict[str, Any],
+    context: dict[str, Any],
+    config: Config,
+) -> bool:
+    """
+    Compute whether a notification is ambient thread noise on a PR the agent reviews but did not author.
+
+    On PRs authored by others, only formal review requests, explicit @mentions, and
+    assignments are actionable. Everything else (comment, author, ci_activity) is
+    thread noise that would cause duplicate re-reviews.
+
+    Args:
+        notification (dict[str, Any]): GitHub notification object
+        context (dict[str, Any]): Fetched context with pr_author info
+        config (Config): Application configuration
+
+    Returns:
+        bool: True if the notification is reviewer noise and should be skipped
+    """
+
+    if context.get('subject_type', '') != 'PullRequest':
+        return False
+
+    pr_author = _as_str(context.get('pr_author', ''))
+    if not pr_author:
+        return False
+
+    if pr_author.lower() == config.github_user.lower():
+        return False
+
+    reason = notification.get('reason', '')
+    return reason not in ('review_requested', 'mention', 'assign')
 
 
 def format_comments(comments: list[dict[str, Any]]) -> str:

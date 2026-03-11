@@ -5,6 +5,7 @@ from agent0.router import (
     _format_timestamp,
     classify,
     format_comments,
+    is_reviewer_noise,
     is_self_triggered,
     should_process,
 )
@@ -314,6 +315,164 @@ class TestIsSelfTriggered:
         config = _make_config()
         context = {'actor': 'someuser'}
         assert not is_self_triggered(context, config)
+
+
+class TestIsReviewerNoise:
+    def test_comment_on_non_authored_pr_is_noise(self) -> None:
+        """
+        Compute that comment on a PR authored by someone else is noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'comment'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert is_reviewer_noise(notification, context, config)
+
+    def test_author_on_non_authored_pr_is_noise(self) -> None:
+        """
+        Compute that author reason on a PR authored by someone else is noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'author'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert is_reviewer_noise(notification, context, config)
+
+    def test_ci_activity_on_non_authored_pr_is_noise(self) -> None:
+        """
+        Compute that ci_activity on a PR authored by someone else is noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'ci_activity'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert is_reviewer_noise(notification, context, config)
+
+    def test_review_requested_on_non_authored_pr_passes(self) -> None:
+        """
+        Compute that review_requested on a non-authored PR is not noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'review_requested'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_mention_on_non_authored_pr_passes(self) -> None:
+        """
+        Compute that mention on a non-authored PR is not noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'mention'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_assign_on_non_authored_pr_passes(self) -> None:
+        """
+        Compute that assign on a non-authored PR is not noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'assign'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'other-user'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_comment_on_self_authored_pr_passes(self) -> None:
+        """
+        Compute that comment on agent's own PR is not noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'comment'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'test-bot'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_author_on_self_authored_pr_passes(self) -> None:
+        """
+        Compute that author reason on agent's own PR is not noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'author'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'test-bot'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_issue_subject_is_never_noise(self) -> None:
+        """
+        Compute that Issue notifications are never reviewer noise.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'comment'}
+        context = {'subject_type': 'Issue', 'pr_author': 'other-user'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_empty_pr_author_is_not_noise(self) -> None:
+        """
+        Compute that empty pr_author defensively passes through.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'comment'}
+        context = {'subject_type': 'PullRequest', 'pr_author': ''}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_missing_pr_author_key_is_not_noise(self) -> None:
+        """
+        Compute that missing pr_author key defensively passes through.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'comment'}
+        context = {'subject_type': 'PullRequest'}
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_case_insensitive_author_match(self) -> None:
+        """
+        Compute that pr_author comparison is case-insensitive.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'comment'}
+        context = {'subject_type': 'PullRequest', 'pr_author': 'Test-Bot'}
+        assert not is_reviewer_noise(notification, context, config)
 
 
 class TestFormatComments:

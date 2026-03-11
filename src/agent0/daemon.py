@@ -13,7 +13,13 @@ from agent0.executor import ExecutorResult
 from agent0.executor import run as executor_run
 from agent0.poller import GitHubClient, Poller, RateLimited
 from agent0.reflector import REFLECTION_SCAN_INTERVAL, Reflector
-from agent0.router import TaskContext, classify, is_self_triggered, should_process
+from agent0.router import (
+    TaskContext,
+    classify,
+    is_reviewer_noise,
+    is_self_triggered,
+    should_process,
+)
 from agent0.workspace import WorkspaceManager
 
 __all__ = ['Daemon', 'Scheduler']
@@ -481,6 +487,23 @@ class Daemon:
                         except Exception:
                             log.warning(
                                 'E2004: Failed to mark self-triggered notification %s as read',
+                                notification.get('id'),
+                            )
+                        continue
+
+                    if is_reviewer_noise(notification, context, self._config):
+                        log.info(
+                            'Skipping reviewer noise for %s/%s#%d reason=%s',
+                            context.get('owner', ''),
+                            context.get('repo', ''),
+                            context.get('number', 0),
+                            reason,
+                        )
+                        try:
+                            await self._poller.mark_read(notification.get('id', ''))
+                        except Exception:
+                            log.warning(
+                                'E2004: Failed to mark reviewer-noise notification %s as read',
                                 notification.get('id'),
                             )
                         continue

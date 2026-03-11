@@ -681,6 +681,7 @@ class Poller:
             context['head_ref'] = pr.get('head', {}).get('ref', '')
             context['base_ref'] = pr.get('base', {}).get('ref', '')
             context['labels'] = [lb.get('name', '') for lb in pr.get('labels', [])]
+            context['pr_author'] = pr.get('user', {}).get('login', '')
 
             diff = await self._client.get_pull_request_diff(owner, repo, number)
             if len(diff) > DIFF_TRUNCATION_LIMIT:
