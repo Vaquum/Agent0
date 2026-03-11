@@ -109,7 +109,7 @@ class WorkspaceManager:
                 ['clone', self._clone_url(owner, repo), str(workspace)],
             )
             if returncode != 0:
-                raise RuntimeError(f'git clone failed for {owner}/{repo}: {stderr}')
+                raise RuntimeError(f'E3001: git clone failed for {owner}/{repo}: {stderr}')
 
             log.info('Cloned %s/%s to %s', owner, repo, workspace)
         else:
@@ -120,7 +120,7 @@ class WorkspaceManager:
                 cwd=workspace,
             )
             if returncode != 0:
-                raise RuntimeError(f'git fetch failed for {owner}/{repo}: {stderr}')
+                raise RuntimeError(f'E3002: git fetch failed for {owner}/{repo}: {stderr}')
 
             returncode, default_branch, stderr = await self._run_git(
                 ['rev-parse', '--abbrev-ref', 'origin/HEAD'],
@@ -136,21 +136,21 @@ class WorkspaceManager:
                 cwd=workspace,
             )
             if returncode != 0:
-                raise RuntimeError(f'git checkout failed for {owner}/{repo}: {stderr}')
+                raise RuntimeError(f'E3003: git checkout failed for {owner}/{repo}: {stderr}')
 
             returncode, _, stderr = await self._run_git(
                 ['reset', '--hard', f'origin/{branch}'],
                 cwd=workspace,
             )
             if returncode != 0:
-                raise RuntimeError(f'git reset failed for {owner}/{repo}: {stderr}')
+                raise RuntimeError(f'E3004: git reset failed for {owner}/{repo}: {stderr}')
 
             returncode, _, stderr = await self._run_git(
                 ['clean', '-fd'],
                 cwd=workspace,
             )
             if returncode != 0:
-                log.warning('git clean failed for %s/%s: %s', owner, repo, stderr)
+                log.warning('E3005: git clean failed for %s/%s: %s', owner, repo, stderr)
 
             log.info('Updated %s/%s to latest %s', owner, repo, branch)
 

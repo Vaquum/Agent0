@@ -153,7 +153,7 @@ async def read_history(
                     if collected >= per_page:
                         return entries
                 except (json.JSONDecodeError, TypeError) as exc:
-                    log.warning('Skipping malformed audit line in %s: %s', file_path, exc)
+                    log.warning('E5004: Skipping malformed audit line in %s: %s', file_path, exc)
                     continue
 
         return entries
@@ -202,7 +202,7 @@ async def read_entry_output(
                         return None
                     return [str(entry) for entry in output]
                 except (json.JSONDecodeError, TypeError) as exc:
-                    log.warning('Skipping malformed audit line in %s: %s', file_path, exc)
+                    log.warning('E5004: Skipping malformed audit line in %s: %s', file_path, exc)
                     continue
 
         return None
