@@ -1,5 +1,11 @@
 # Agent0 Developer Docs
 
+**Status:** Stable
+
+**Context:** Entry point for the developer documentation. Intended for engineers building, debugging, or extending Agent0.
+
+**Outcome:** After reading, you can locate the right doc for any development topic — architecture, modules, deployment, testing, or troubleshooting.
+
 Agent0 is a daemon that operates as an autonomous software engineer on GitHub. It polls for notifications, classifies them, and dispatches work to Claude Code CLI — then posts the results back to GitHub. Python backend, TypeScript dashboard, deployed on Render via Docker.
 
 ## How It Works

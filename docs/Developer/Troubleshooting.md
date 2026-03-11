@@ -1,5 +1,11 @@
 # Troubleshooting
 
+**Status:** Stable
+
+**Context:** Common operational issues and their solutions. Intended for engineers debugging a running Agent0 instance.
+
+**Outcome:** After reading, you can diagnose and resolve the most common Agent0 operational failures.
+
 ## Notifications Not Picked Up
 
 **Symptom:** Agent0 is running but not responding to @mentions, assignments, or reviews.

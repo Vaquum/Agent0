@@ -1,5 +1,11 @@
 # Modules
 
+**Status:** Stable
+
+**Context:** API reference for all modules in the `agent0` package. Intended for engineers who need to understand the public interface of each module.
+
+**Outcome:** After reading, you can look up the public API of any module and understand its exports.
+
 Module-by-module reference for the `agent0` package. Each section covers the public API exposed via `__all__`.
 
 ---

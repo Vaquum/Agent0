@@ -1,5 +1,11 @@
 # Agent0 Authors a PR
 
+**Status:** Stable
+
+**Context:** This page describes Agent0's full PR authoring lifecycle. Intended for users who want to understand what happens after Agent0 creates a pull request.
+
+**Outcome:** After reading, you will understand each step of Agent0's PR lifecycle and the GitHub triggers that drive it.
+
 When Agent0 creates a pull request, it owns the full lifecycle until a human merges or closes it. Every review, comment, and CI failure is picked up and acted on automatically.
 
 | Step | What happens | GitHub trigger |

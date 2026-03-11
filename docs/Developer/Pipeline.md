@@ -1,5 +1,11 @@
 # Pipeline
 
+**Status:** Stable
+
+**Context:** End-to-end notification processing pipeline. Intended for engineers who need to understand how a GitHub event flows through the system.
+
+**Outcome:** After reading, you can trace a notification from poll to task execution and understand each processing stage.
+
 This document traces the full lifecycle of a GitHub notification from arrival to executed task.
 
 ## Overview

@@ -1,5 +1,11 @@
 # Setup
 
+**Status:** Stable
+
+**Context:** Local development environment setup for Agent0. Intended for engineers getting started with the codebase.
+
+**Outcome:** After reading, you can set up a working local development environment and run the application.
+
 ## Prerequisites
 
 - Python 3.12+

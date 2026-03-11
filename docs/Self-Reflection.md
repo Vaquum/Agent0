@@ -1,10 +1,10 @@
 # Self-Reflection
 
-Status: **Stable**
+**Status:** Stable
 
-Agent0 periodically reflects on PRs it has reviewed to identify patterns and propose improvements. This page covers how self-reflection works and what it produces. Audience: anyone using or managing an Agent0 deployment.
+**Context:** This page covers how Agent0's self-reflection works and what it produces. Intended for anyone using or managing an Agent0 deployment.
 
-After reading this, you will understand when reflections happen, what they produce, and how to monitor them.
+**Outcome:** After reading, you will understand when reflections happen, what they produce, and how to monitor them.
 
 ## How It Works
 
