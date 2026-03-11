@@ -392,3 +392,23 @@ class TestFormatCheckFailures:
         ]
         result = _format_check_failures(check_runs)
         assert '### build (timed_out)' in result
+
+
+class TestGitHubClient:
+    @pytest.mark.asyncio
+    async def test_get_pull_request_diff_returns_empty_on_406(self) -> None:
+        """
+        Compute that 406 Not Acceptable returns empty diff without raising.
+
+        Returns:
+            None
+        """
+
+        transport = httpx.MockTransport(
+            lambda request: httpx.Response(406),
+        )
+        client = GitHubClient.__new__(GitHubClient)
+        client._client = httpx.AsyncClient(transport=transport, base_url='https://api.github.com')
+
+        result = await client.get_pull_request_diff('owner', 'repo', 1)
+        assert result == ''
