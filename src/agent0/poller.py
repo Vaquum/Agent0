@@ -215,6 +215,14 @@ class GitHubClient:
             f'/repos/{owner}/{repo}/pulls/{number}',
             headers={'Accept': 'application/vnd.github.v3.diff'},
         )
+        if response.status_code == 406:
+            log.warning(
+                'E2005: Diff unavailable (406) for %s/%s#%d',
+                owner,
+                repo,
+                number,
+            )
+            return ''
         response.raise_for_status()
         return response.text
 
