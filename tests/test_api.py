@@ -38,9 +38,7 @@ class TestHealthEndpoint:
         config = _make_config(tmp_path)
         app = create_app(_make_daemon(), config)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/health')
 
         assert response.status_code == 200
@@ -56,9 +54,7 @@ class TestRunningTasksEndpoint:
         tasks = [{'repo': 'Vaquum/Agent0', 'event_type': 'mention', 'number': 1}]
         app = create_app(_make_daemon(running=tasks), config)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/tasks/running')
 
         assert response.status_code == 200
@@ -69,9 +65,7 @@ class TestRunningTasksEndpoint:
         config = _make_config(tmp_path)
         app = create_app(_make_daemon(), config)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/tasks/running')
 
         assert response.status_code == 200
@@ -85,9 +79,7 @@ class TestQueuedTasksEndpoint:
         tasks = [{'repo': 'Vaquum/Agent0', 'event_type': 'assign', 'number': 2}]
         app = create_app(_make_daemon(queued=tasks), config)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/tasks/queued')
 
         assert response.status_code == 200
@@ -101,9 +93,7 @@ class TestHistoryEndpoint:
         config.audit_dir.mkdir(parents=True, exist_ok=True)
         app = create_app(_make_daemon(), config)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/tasks/history')
 
         assert response.status_code == 200
@@ -116,9 +106,7 @@ class TestLogsEndpoint:
         config = _make_config(tmp_path)
         app = create_app(_make_daemon(), config, log_buffer=None)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/logs')
 
         assert response.status_code == 200
@@ -135,9 +123,7 @@ class TestLogsEndpoint:
 
         app = create_app(_make_daemon(), config, log_buffer=buf)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/logs')
 
         assert response.status_code == 200
@@ -157,9 +143,7 @@ class TestExecutorOutputEndpoint:
         }
         app = create_app(daemon, config)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url='http://test'
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
             response = await client.get('/api/tasks/running/Vaquum/Agent0/output')
 
         assert response.status_code == 200

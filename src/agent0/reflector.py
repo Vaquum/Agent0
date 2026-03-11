@@ -402,7 +402,6 @@ class Reflector:
         return rfc_url
 
 
-
 def _pr_key_from_search_item(item: dict[str, Any]) -> str:
     """
     Compute PR key from a GitHub Search API issue item.

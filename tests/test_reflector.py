@@ -42,7 +42,6 @@ def _make_search_item(
     }
 
 
-
 class TestPrKeyFromSearchItem:
     def test_valid_item(self) -> None:
         item = _make_search_item(owner='vaquum', repo='confab', number=14)

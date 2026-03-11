@@ -8,6 +8,7 @@ from typing import Any
 
 from agent0.audit import AuditEntry, log_entry
 from agent0.config import Config
+from agent0.errors import Agent0Error, ErrorCode, report_error
 from agent0.executor import ExecutorResult
 from agent0.executor import run as executor_run
 from agent0.poller import GitHubClient, Poller, RateLimited
@@ -62,6 +63,20 @@ class Scheduler:
         self._output_buffers: dict[str, list[str]] = {}
         self._workspace_mgr = WorkspaceManager(config)
         self._poller: Poller | None = None
+        self._client: GitHubClient | None = None
+
+    def set_client(self, client: GitHubClient) -> None:
+        """
+        Compute client reference for error reporting.
+
+        Args:
+            client (GitHubClient): GitHub API client
+
+        Returns:
+            None
+        """
+
+        self._client = client
 
     def set_poller(self, poller: Poller) -> None:
         """
@@ -180,7 +195,18 @@ class Scheduler:
                 )
             except Exception:
                 tb = traceback.format_exc()
-                log.error('Task failed for %s: %s', repo_key, tb)
+                log.error('E4003: Task failed for %s: %s', repo_key, tb)
+                await self._report(Agent0Error(
+                    code=ErrorCode.E4003,
+                    summary=f'Task execution failed for {repo_key}#{context.number}',
+                    detail=tb[:2000],
+                    related_url=f'https://github.com/{repo_key}/issues/{context.number}',
+                    context_history=[
+                        f'Received {context.event_type} for {repo_key}#{context.number}',
+                        f'Triggered by {context.trigger_user}',
+                        'Task execution raised an unhandled exception',
+                    ],
+                ))
                 result = ExecutorResult(
                     status='failure',
                     response=None,
@@ -202,7 +228,7 @@ class Scheduler:
                         await self._poller.mark_read(context.notification_id)
                     except Exception:
                         log.warning(
-                            'Failed to mark notification %s as read',
+                            'E2004: Failed to mark notification %s as read',
                             context.notification_id,
                         )
 
@@ -249,7 +275,7 @@ class Scheduler:
         try:
             await log_entry(entry, self._config)
         except Exception:
-            log.error('Failed to write audit entry: %s', traceback.format_exc())
+            log.error('E5001: Failed to write audit entry: %s', traceback.format_exc())
 
     def get_running(self) -> list[dict[str, Any]]:
         """
@@ -298,6 +324,26 @@ class Scheduler:
                 )
         return tasks
 
+    async def _report(self, error: Agent0Error) -> None:
+        """
+        Compute error report as GitHub issue. Never raises.
+
+        Args:
+            error (Agent0Error): Structured error to report
+
+        Returns:
+            None
+        """
+
+        if not self._client:
+            return
+
+        owner = self._config.whitelisted_orgs[0] if self._config.whitelisted_orgs else ''
+        if not owner:
+            return
+
+        await report_error(error, self._client, owner, self._config.agent0_repo)
+
     def get_executor_output(self, repo_key: str, after: int = 0) -> dict[str, Any]:
         """
         Compute buffered executor output lines for live dashboard view.
@@ -334,6 +380,7 @@ class Daemon:
         self._poller = Poller(self._client, config)
         self._scheduler = Scheduler(config)
         self._scheduler.set_poller(self._poller)
+        self._scheduler.set_client(self._client)
         self._reflector = Reflector(config, self._client, self._scheduler)
 
     @property
@@ -361,7 +408,7 @@ class Daemon:
         username = user.get('login', '')
         if username.lower() != self._config.github_user.lower():
             raise RuntimeError(
-                f'GitHub token is for {username}, expected {self._config.github_user}',
+                f'E1004: GitHub token is for {username}, expected {self._config.github_user}',
             )
         log.info('GitHub auth verified: %s', username)
         log.info(
@@ -403,7 +450,7 @@ class Daemon:
                         context = await self._poller.fetch_context(notification)
                     except Exception:
                         log.warning(
-                            'Failed to fetch context for notification %s: %s',
+                            'E7004: Failed to fetch context for notification %s: %s',
                             notification.get('id'),
                             traceback.format_exc(),
                         )
@@ -418,7 +465,7 @@ class Daemon:
                             await self._poller.mark_read(notification.get('id', ''))
                         except Exception:
                             log.warning(
-                                'Failed to mark skipped notification %s as read',
+                                'E2004: Failed to mark skipped notification %s as read',
                                 notification.get('id'),
                             )
                         continue
@@ -431,7 +478,7 @@ class Daemon:
                             await self._poller.mark_read(notification.get('id', ''))
                         except Exception:
                             log.warning(
-                                'Failed to mark self-triggered notification %s as read',
+                                'E2004: Failed to mark self-triggered notification %s as read',
                                 notification.get('id'),
                             )
                         continue
@@ -450,12 +497,12 @@ class Daemon:
                     self._scheduler.submit(task)
 
             except RateLimited as e:
-                log.warning('Rate limited, sleeping %ds', e.retry_after)
+                log.warning('E2001: Rate limited, sleeping %ds', e.retry_after)
                 await asyncio.sleep(e.retry_after)
                 continue
 
             except Exception:
-                log.warning('Poll error: %s', traceback.format_exc())
+                log.warning('E7001: Poll error: %s', traceback.format_exc())
 
             if self._poll_count % CI_SCAN_INTERVAL == 0:
                 try:
@@ -465,7 +512,7 @@ class Daemon:
                             context = await self._poller.fetch_context(notification)
                         except Exception:
                             log.warning(
-                                'CI scan: failed to fetch context for %s: %s',
+                                'E7004: CI scan: failed to fetch context for %s: %s',
                                 notification.get('id'),
                                 traceback.format_exc(),
                             )
@@ -478,17 +525,17 @@ class Daemon:
                         self._scheduler.submit(task)
 
                 except RateLimited as e:
-                    log.warning('CI scan rate limited, sleeping %ds', e.retry_after)
+                    log.warning('E2001: CI scan rate limited, sleeping %ds', e.retry_after)
                     await asyncio.sleep(e.retry_after)
 
                 except Exception:
-                    log.warning('CI scan error: %s', traceback.format_exc())
+                    log.warning('E7002: CI scan error: %s', traceback.format_exc())
 
             if self._poll_count % REFLECTION_SCAN_INTERVAL == 0:
                 try:
                     await self._reflector.scan()
                 except Exception:
-                    log.warning('Reflection scan error: %s', traceback.format_exc())
+                    log.warning('E7003: Reflection scan error: %s', traceback.format_exc())
 
             await asyncio.sleep(self._config.poll_interval)
 
