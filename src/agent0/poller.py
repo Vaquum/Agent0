@@ -380,6 +380,37 @@ class GitHubClient:
         data = response.json()
         return data.get('items', [])  # type: ignore[no-any-return]
 
+    async def search_merged_prs_reviewed_by(
+        self,
+        reviewer: str,
+        org: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Compute merged PRs reviewed by a user within an organization.
+
+        Args:
+            reviewer (str): GitHub username who submitted a review
+            org (str): GitHub organization or user to search in
+
+        Returns:
+            list[dict[str, Any]]: Search result items (issue-like objects)
+        """
+
+        response = await self._client.get(
+            '/search/issues',
+            params={
+                'q': f'reviewed-by:{reviewer} type:pr is:merged user:{org}',
+                'sort': 'updated',
+                'order': 'desc',
+                'per_page': '100',
+            },
+        )
+        if response.status_code == 422:
+            return []
+        response.raise_for_status()
+        data = response.json()
+        return data.get('items', [])  # type: ignore[no-any-return]
+
     async def get_check_suites_for_ref(
         self,
         owner: str,

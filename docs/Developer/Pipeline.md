@@ -119,6 +119,21 @@ The synthetic notifications flow through the same pipeline as real notifications
 
 **Stale SHA safety:** When fetching check suite context, the poller verifies that the check suite's commit SHA matches the PR's current head SHA. If a new commit was pushed after the check suite was created, the stale check suite is skipped. This prevents the agent from processing outdated failures.
 
+## Self-Reflection Scanning
+
+Every 20th poll cycle (~10 minutes at the default 30s interval), the daemon calls `Reflector.scan()`:
+
+1. Query GitHub Search API for merged PRs that Agent0 reviewed, once per whitelisted org
+2. Filter out PRs already in the considered set (persisted in `reflections.jsonl`)
+3. If fewer than 6 new merged PRs, log and return
+4. Pick a random target from the new PRs
+5. Run two-phase reflection: Phase 1 (open-ended reflection) → Phase 2 (RFC issue creation)
+6. Record all new PRs as considered (resets the counter for the next cycle)
+
+The reflection runs in the Agent0 workspace under the Scheduler's per-repo lock. If the reflection fails, nothing is recorded and the same PRs will be re-discovered on the next scan.
+
+See [Reflector](Reflector.md) for full architecture details.
+
 ## Bot Reviews
 
 GitHub does not generate notifications for bot activity (e.g., Copilot reviews). The agent only processes notifications triggered by human users. To have the agent address a bot review, @mention it in a comment on the PR.

@@ -61,6 +61,7 @@ Async HTTP client for the GitHub REST API. Uses `httpx.AsyncClient` with bearer 
 | `get_check_runs_for_suite(owner, repo, check_suite_id)` | `list[dict]` | `GET /repos/{o}/{r}/check-suites/{id}/check-runs` |
 | `get_pull_requests_for_commit(owner, repo, sha)` | `list[dict]` | `GET /repos/{o}/{r}/commits/{sha}/pulls` |
 | `search_open_prs_by_author(author, org)` | `list[dict]` | Search API for open PRs by author within an org |
+| `search_merged_prs_reviewed_by(reviewer, org)` | `list[dict]` | Search API for merged PRs reviewed by user within an org |
 | `get_check_suites_for_ref(owner, repo, ref)` | `list[dict]` | `GET /repos/{o}/{r}/commits/{ref}/check-suites` |
 | `close()` | `None` | Close the HTTP client |
 
@@ -189,6 +190,29 @@ Manages local git clones on persistent disk.
 |--------|---------|-------------|
 | `prepare(owner, repo)` | `Path` | Clone or update repo, return workspace path |
 | `cleanup_stale(max_age_days)` | `list[str]` | Remove workspaces not accessed recently |
+
+---
+
+## reflector
+
+`from agent0.reflector import REFLECTION_INTERVAL, REFLECTION_SCAN_INTERVAL, Reflector`
+
+### `Reflector`
+
+Self-reflection engine that triggers post-mortem learning on merged PRs. Queries GitHub Search API, counts new merged PRs, and fires a two-phase reflection every `REFLECTION_INTERVAL` (6) merged PRs.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `scan()` | `None` | Query GitHub for merged PRs, trigger reflection if threshold met |
+
+### Constants
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `REFLECTION_SCAN_INTERVAL` | `20` | Polls between scans (~10 min) |
+| `REFLECTION_INTERVAL` | `6` | New merged PRs needed to trigger |
+
+See [Reflector](Reflector.md) for full architecture details.
 
 ---
 
