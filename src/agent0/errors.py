@@ -38,6 +38,7 @@ class ErrorCode(StrEnum):
     E2002 = 'E2002'  # API request failed
     E2003 = 'E2003'  # Unexpected API response
     E2004 = 'E2004'  # Notification mark-read failed
+    E2005 = 'E2005'  # Diff unavailable (406)
 
     # E3xxx — Workspace / Git
     E3001 = 'E3001'  # Git clone failed
