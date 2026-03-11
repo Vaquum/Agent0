@@ -402,34 +402,6 @@ class Reflector:
         return rfc_url
 
 
-def _parse_pr_key(pr_key: str) -> tuple[str, str, int]:
-    """
-    Compute owner, repo, and number from a PR key.
-
-    Args:
-        pr_key (str): PR key in owner/repo#number format
-
-    Returns:
-        tuple[str, str, int]: Owner, repo, number (empty/0 on parse failure)
-    """
-
-    if '#' not in pr_key:
-        return '', '', 0
-
-    repo_part, number_str = pr_key.rsplit('#', 1)
-
-    if '/' not in repo_part:
-        return '', '', 0
-
-    owner, repo = repo_part.split('/', 1)
-
-    try:
-        number = int(number_str)
-    except ValueError:
-        return '', '', 0
-
-    return owner, repo, number
-
 
 def _pr_key_from_search_item(item: dict[str, Any]) -> str:
     """
