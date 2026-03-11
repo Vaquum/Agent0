@@ -196,17 +196,19 @@ class Scheduler:
             except Exception:
                 tb = traceback.format_exc()
                 log.error('E4003: Task failed for %s: %s', repo_key, tb)
-                await self._report(Agent0Error(
-                    code=ErrorCode.E4003,
-                    summary=f'Task execution failed for {repo_key}#{context.number}',
-                    detail=tb[:2000],
-                    related_url=f'https://github.com/{repo_key}/issues/{context.number}',
-                    context_history=[
-                        f'Received {context.event_type} for {repo_key}#{context.number}',
-                        f'Triggered by {context.trigger_user}',
-                        'Task execution raised an unhandled exception',
-                    ],
-                ))
+                await self._report(
+                    Agent0Error(
+                        code=ErrorCode.E4003,
+                        summary=f'Task execution failed for {repo_key}#{context.number}',
+                        detail=tb[:2000],
+                        related_url=f'https://github.com/{repo_key}/issues/{context.number}',
+                        context_history=[
+                            f'Received {context.event_type} for {repo_key}#{context.number}',
+                            f'Triggered by {context.trigger_user}',
+                            'Task execution raised an unhandled exception',
+                        ],
+                    )
+                )
                 result = ExecutorResult(
                     status='failure',
                     response=None,
