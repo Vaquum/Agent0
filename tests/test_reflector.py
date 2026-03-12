@@ -102,13 +102,7 @@ class TestLoadConsideredFromExisting:
 
 class TestLoadConsideredSkipsOldFormat:
     def test_dice_landed_entries_ignored(self, tmp_path: Path) -> None:
-        """
-        Compute that old dice-roll format entries are not loaded.
-
-        Returns:
-            None
-        """
-
+        # Old dice-roll format entries are not loaded
         config = _make_config(tmp_path)
         reflections_file = tmp_path / 'reflections.jsonl'
         reflections_file.write_text(
