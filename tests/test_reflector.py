@@ -100,6 +100,28 @@ class TestLoadConsideredFromExisting:
         assert len(reflector._considered) == 2
 
 
+class TestLoadConsideredSkipsOldFormat:
+    def test_dice_landed_entries_ignored(self, tmp_path: Path) -> None:
+        # Old dice-roll format entries are not loaded
+        config = _make_config(tmp_path)
+        reflections_file = tmp_path / 'reflections.jsonl'
+        reflections_file.write_text(
+            json.dumps({'pr_key': 'vaquum/confab#10', 'dice_landed': False})
+            + '\n'
+            + json.dumps({'pr_key': 'vaquum/confab#11', 'dice_landed': True})
+            + '\n'
+            + json.dumps({'pr_key': 'vaquum/confab#12', 'reflected': True})
+            + '\n',
+            encoding='utf-8',
+        )
+
+        reflector = Reflector(config, AsyncMock(), AsyncMock())
+        assert 'vaquum/confab#10' not in reflector._considered
+        assert 'vaquum/confab#11' not in reflector._considered
+        assert 'vaquum/confab#12' in reflector._considered
+        assert len(reflector._considered) == 1
+
+
 class TestDeduplication:
     def test_same_pr_key_only_considered_once(self, tmp_path: Path) -> None:
         config = _make_config(tmp_path)

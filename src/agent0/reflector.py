@@ -69,6 +69,10 @@ class Reflector:
         """
         Compute in-memory set of already-considered PR keys from disk.
 
+        Only loads entries written by the current counter-based system
+        (entries with the 'reflected' field). Old dice-roll entries
+        ('dice_landed' field) are skipped so the counter starts fresh.
+
         Returns:
             None
         """
@@ -83,6 +87,8 @@ class Reflector:
                     continue
                 try:
                     entry = json.loads(line)
+                    if 'reflected' not in entry:
+                        continue
                     pr_key = entry.get('pr_key', '')
                     if pr_key:
                         self._considered.add(pr_key)
