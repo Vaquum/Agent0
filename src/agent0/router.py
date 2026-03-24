@@ -25,7 +25,7 @@ class TaskContext:
     Compute structured task context from a GitHub notification.
 
     Args:
-        event_type (str): Type of event - mention, assignment, or review_request
+        event_type (str): Type of event - mention, assignment, review_request, re_review, or ci_failure
         owner (str): Repository owner
         repo (str): Repository name
         number (int): Issue or PR number
