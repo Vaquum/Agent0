@@ -228,7 +228,7 @@ class TestBuildPrompt:
         prompt = _build_prompt(ctx, config)
 
         assert 're-review' in prompt.lower()
-        assert 'Do NOT look for new issues' in prompt
+        assert 'without any additional comments' in prompt
         assert 'gh pr review' in prompt
 
     def test_review_request_has_no_rereview_logic(self) -> None:

@@ -171,8 +171,9 @@ Reply to their thread instead.
 - Clean up any temporary files you create (e.g., /tmp/review.json)."""
 
 
-RE_REVIEW_PR = """The author of PR #{number} ("{title}") has requested you re-review after \
-addressing your feedback.
+RE_REVIEW_PR = """This is a re-review of PR #{number} on {owner}/{repo}. The author addressed \
+your feedback and requested another review. This is for checking if your previous comments \
+were addressed, do not look for new issues.
 
 PR diff:
 {diff}
@@ -180,35 +181,23 @@ PR diff:
 Conversation:
 {formatted_comments}
 
-## Instructions
-
 1. Fetch your previous inline comments:
    ```bash
    gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login=="{github_user}") | {{id: .id, path: .path, line: .line, body: .body}}'
    ```
-2. For each comment, check whether the issue was fixed in the current diff.
-3. If ALL your previous comments are resolved, approve with NO body text:
+2. For each of your previous comments, check whether the issue was fixed in the current diff.
+3. If ALL your previous comments are resolved (without any additional comments):
    ```bash
    gh pr review {number} --approve
    ```
-   Do NOT add a --body flag. Do NOT add any comment. Just approve.
-4. If some issues remain, reply to those specific threads:
+4. If some issues remain, reply to those specific threads explaining what is still wrong:
    ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies \
-     --method POST -f body="Still not addressed: ..."
+   gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="This is still not addressed: ..."
    ```
-   Then request changes:
+5. After replying to unresolved threads, submit a changes-requested review:
    ```bash
-   gh pr review {number} --request-changes --body "See my replies on the unresolved threads."
-   ```
-
-## Rules
-
-- Do NOT look for new issues. Only verify your previous comments were addressed.
-- Do NOT write any general commentary, summary, or praise.
-- Do NOT use `gh pr comment` or `gh issue comment`.
-- Submit exactly ONE review action: either --approve or --request-changes.
-- If approving, the command is ONLY `gh pr review {number} --approve` with no other flags."""
+   gh pr review {number} --request-changes --body "Some items from my previous review still need to be addressed. See my replies on the relevant threads."
+   ```"""
 
 
 CI_FAILURE = """CI checks have failed on your PR #{number}: "{title}"

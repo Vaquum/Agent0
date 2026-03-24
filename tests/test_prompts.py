@@ -60,11 +60,11 @@ class TestPromptsModule:
             None
         """
 
-        assert 'Do NOT look for new issues' in prompts.RE_REVIEW_PR
         assert 're-review' in prompts.RE_REVIEW_PR.lower()
         assert '{owner}' in prompts.RE_REVIEW_PR
         assert '{github_user}' in prompts.RE_REVIEW_PR
         assert 'gh pr review {number} --approve' in prompts.RE_REVIEW_PR
+        assert 'without any additional comments' in prompts.RE_REVIEW_PR
 
     def test_review_pr_has_no_rereview_logic(self) -> None:
         """
@@ -76,7 +76,7 @@ class TestPromptsModule:
         """
 
         assert 'RE-REVIEW' not in prompts.REVIEW_PR
-        assert 'Do NOT look for new issues' not in prompts.REVIEW_PR
+        assert 'exactly two possible actions' not in prompts.REVIEW_PR
 
     def test_review_pr_has_thread_dedup(self) -> None:
         """
