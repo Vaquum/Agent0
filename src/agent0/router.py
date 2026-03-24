@@ -101,6 +101,9 @@ def classify(
     reason = notification.get('reason', '')
     event_type = _reason_to_event_type(reason)
 
+    if event_type == 'review_request' and context.get('has_agent_reviewed', False):
+        event_type = 're_review'
+
     actor = context.get('actor', '')
     trigger_text = _extract_trigger_text(notification, context, config)
 
