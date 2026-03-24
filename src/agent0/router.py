@@ -171,6 +171,10 @@ def is_reviewer_noise(
     if pr_author.lower() == config.github_user.lower():
         return False
 
+    reason = _as_str(notification.get('reason', ''))
+    if reason in ('mention', 'assign'):
+        return False
+
     requested = context.get('requested_reviewers', [])
     agent_lower = config.github_user.lower()
     return agent_lower not in [_as_str(r).lower() for r in requested]

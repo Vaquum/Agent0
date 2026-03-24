@@ -369,11 +369,11 @@ class TestIsReviewerNoise:
         }
         assert not is_reviewer_noise(notification, context, config)
 
-    def test_reason_is_irrelevant(self) -> None:
+    def test_thread_update_reasons_are_noise(self) -> None:
         """
-        Compute that notification reason does not affect the check.
-        Thread updates keep the original reason (e.g. review_requested)
-        even when the activity is a comment or push, not a new request.
+        Compute that thread-update reasons are noise when agent is
+        not in requested_reviewers. GitHub threads retain their original
+        reason (e.g. review_requested) across commits and comments.
 
         Returns:
             None
@@ -385,9 +385,45 @@ class TestIsReviewerNoise:
             'pr_author': 'other-user',
             'requested_reviewers': [],
         }
-        for reason in ('review_requested', 'comment', 'author', 'ci_activity', 'mention'):
+        for reason in ('review_requested', 'comment', 'author', 'ci_activity'):
             notification = {'reason': reason}
             assert is_reviewer_noise(notification, context, config)
+
+    def test_mention_is_never_noise(self) -> None:
+        """
+        Compute that @mention on a non-authored PR is always actionable,
+        even when agent is not in requested_reviewers.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'mention'}
+        context = {
+            'subject_type': 'PullRequest',
+            'pr_author': 'other-user',
+            'requested_reviewers': [],
+        }
+        assert not is_reviewer_noise(notification, context, config)
+
+    def test_assign_is_never_noise(self) -> None:
+        """
+        Compute that assignment on a non-authored PR is always actionable,
+        even when agent is not in requested_reviewers.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {'reason': 'assign'}
+        context = {
+            'subject_type': 'PullRequest',
+            'pr_author': 'other-user',
+            'requested_reviewers': [],
+        }
+        assert not is_reviewer_noise(notification, context, config)
 
     def test_self_authored_pr_is_never_noise(self) -> None:
         """
