@@ -144,15 +144,17 @@ def is_reviewer_noise(
     config: Config,
 ) -> bool:
     """
-    Compute whether a notification is ambient thread noise on a PR the agent reviews but did not author.
+    Compute whether a notification is thread noise on a PR the agent reviews but did not author.
 
-    On PRs authored by others, only formal review requests, explicit @mentions, and
-    assignments are actionable. Everything else (comment, author, ci_activity) is
-    thread noise that would cause duplicate re-reviews.
+    On PRs authored by others, the only actionable signal is the agent being
+    currently listed in the PR's requested_reviewers. Thread updates (commits,
+    comments, CI) keep the original notification reason (often review_requested)
+    but do NOT re-add the agent to requested_reviewers. Checking the list
+    distinguishes genuine review requests from ambient thread activity.
 
     Args:
         notification (dict[str, Any]): GitHub notification object
-        context (dict[str, Any]): Fetched context with pr_author info
+        context (dict[str, Any]): Fetched context with pr_author and requested_reviewers
         config (Config): Application configuration
 
     Returns:
@@ -169,8 +171,9 @@ def is_reviewer_noise(
     if pr_author.lower() == config.github_user.lower():
         return False
 
-    reason = notification.get('reason', '')
-    return reason in ('comment', 'author', 'ci_activity')
+    requested = context.get('requested_reviewers', [])
+    agent_lower = config.github_user.lower()
+    return agent_lower not in [_as_str(r).lower() for r in requested]
 
 
 def format_comments(comments: list[dict[str, Any]]) -> str:
