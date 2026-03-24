@@ -135,7 +135,7 @@ Only verify that your previous comments were addressed. Do NOT look for new issu
 2. For each of your previous comments, check whether the issue was fixed in the current diff.
 3. If ALL your previous comments are resolved:
    ```bash
-   gh pr review {number} --approve --body "All previous review comments have been addressed."
+   gh pr review {number} --approve
    ```
 4. If some issues remain, reply to those specific threads explaining what is still wrong:
    ```bash
