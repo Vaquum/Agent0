@@ -107,6 +107,16 @@ def _build_prompt(context: TaskContext, config: Config) -> str:
             repo=context.repo,
             github_user=config.github_user,
         )
+    elif context.event_type == 're_review':
+        body = prompts.RE_REVIEW_PR.format(
+            number=context.number,
+            title=title,
+            diff=context.diff or '(no diff available)',
+            formatted_comments=formatted,
+            owner=context.owner,
+            repo=context.repo,
+            github_user=config.github_user,
+        )
     elif context.event_type == 'ci_failure':
         body = prompts.CI_FAILURE.format(
             number=context.number,

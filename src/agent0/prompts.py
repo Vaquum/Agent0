@@ -15,6 +15,7 @@ __all__ = [
     'MENTION_PR',
     'PREAMBLE',
     'REVIEW_PR',
+    'RE_REVIEW_PR',
     'SELF_REFLECTION',
     'SELF_REFLECTION_RFC',
 ]
@@ -114,42 +115,6 @@ Conversation:
 
 ## Review instructions
 
-**Step 1: Check if you have already reviewed this PR.**
-
-Run:
-```bash
-gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.user.login=="{github_user}")] | length'
-```
-
----
-
-### If you have already reviewed (count > 0) — RE-REVIEW
-
-This is a re-review. The author addressed your feedback and requested another review.
-Only verify that your previous comments were addressed. Do NOT look for new issues.
-
-1. Fetch your previous inline comments:
-   ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login=="{github_user}") | {{id: .id, path: .path, line: .line, body: .body}}'
-   ```
-2. For each of your previous comments, check whether the issue was fixed in the current diff.
-3. If ALL your previous comments are resolved:
-   ```bash
-   gh pr review {number} --approve
-   ```
-4. If some issues remain, reply to those specific threads explaining what is still wrong:
-   ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="This is still not addressed: ..."
-   ```
-5. After replying to unresolved threads, submit a changes-requested review:
-   ```bash
-   gh pr review {number} --request-changes --body "Some items from my previous review still need to be addressed. See my replies on the relevant threads."
-   ```
-
----
-
-### If this is your FIRST review
-
 1. Read the diff carefully. Check each changed file for:
    - Bugs and logic errors
    - Edge cases and error handling
@@ -204,6 +169,35 @@ Reply to their thread instead.
 - Keep each inline comment concise and actionable — state what is wrong and what should change.
 - Submit exactly ONE review. Do not submit multiple reviews in a single session.
 - Clean up any temporary files you create (e.g., /tmp/review.json)."""
+
+
+RE_REVIEW_PR = """This is a re-review of PR #{number} on {owner}/{repo}. The author addressed \
+your feedback and requested another review. This is for checking if your previous comments \
+were addressed, do not look for new issues.
+
+PR diff:
+{diff}
+
+Conversation:
+{formatted_comments}
+
+1. Fetch your previous inline comments:
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login=="{github_user}") | {{id: .id, path: .path, line: .line, body: .body}}'
+   ```
+2. For each of your previous comments, check whether the issue was fixed in the current diff.
+3. If ALL your previous comments are resolved (without any additional comments):
+   ```bash
+   gh pr review {number} --approve
+   ```
+4. If some issues remain, reply to those specific threads explaining what is still wrong:
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="This is still not addressed: ..."
+   ```
+5. After replying to unresolved threads, submit a changes-requested review:
+   ```bash
+   gh pr review {number} --request-changes --body "Some items from my previous review still need to be addressed. See my replies on the relevant threads."
+   ```"""
 
 
 CI_FAILURE = """CI checks have failed on your PR #{number}: "{title}"

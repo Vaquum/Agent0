@@ -208,9 +208,32 @@ class TestBuildPrompt:
         assert 'NEVER use `gh pr comment`' in prompt
         assert 'reviews --method POST --input' in prompt
 
-    def test_review_request_has_rereviewed_logic(self) -> None:
+    def test_re_review_uses_dedicated_prompt(self) -> None:
         """
-        Compute that review request prompt includes re-review instructions.
+        Compute that re_review event type uses the RE_REVIEW_PR prompt.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        ctx = _make_context(
+            event_type='re_review',
+            subject_type='PullRequest',
+            issue_body='Added feature',
+            diff='diff --git a/file.py b/file.py',
+            head_ref='feature-branch',
+            base_ref='main',
+        )
+        prompt = _build_prompt(ctx, config)
+
+        assert 're-review' in prompt.lower()
+        assert 'without any additional comments' in prompt
+        assert 'gh pr review' in prompt
+
+    def test_review_request_has_no_rereview_logic(self) -> None:
+        """
+        Compute that review_request prompt does NOT contain re-review logic.
 
         Returns:
             None
@@ -227,9 +250,8 @@ class TestBuildPrompt:
         )
         prompt = _build_prompt(ctx, config)
 
-        assert 'already reviewed' in prompt.lower()
-        assert 'RE-REVIEW' in prompt
-        assert 'Do NOT look for new issues' in prompt
+        assert 'RE-REVIEW' not in prompt
+        assert 'Do NOT look for new issues' not in prompt
 
     def test_review_request_includes_owner_repo(self) -> None:
         """

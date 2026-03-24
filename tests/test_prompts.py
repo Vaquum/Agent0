@@ -16,6 +16,7 @@ class TestPromptsModule:
             'MENTION_PR',
             'ASSIGNED_ISSUE',
             'REVIEW_PR',
+            'RE_REVIEW_PR',
             'CI_FAILURE',
             'SELF_REFLECTION',
             'SELF_REFLECTION_RFC',
@@ -50,19 +51,32 @@ class TestPromptsModule:
         assert 'NEVER use `gh pr comment`' in prompts.REVIEW_PR
         assert '{owner}' in prompts.REVIEW_PR
         assert '{repo}' in prompts.REVIEW_PR
-        assert '{github_user}' in prompts.REVIEW_PR
 
-    def test_review_pr_has_rereview_logic(self) -> None:
+    def test_re_review_pr_is_separate_prompt(self) -> None:
         """
-        Compute that REVIEW_PR template includes re-review instructions.
+        Compute that RE_REVIEW_PR is a dedicated prompt with re-review instructions.
 
         Returns:
             None
         """
 
-        assert 'RE-REVIEW' in prompts.REVIEW_PR
-        assert 'Do NOT look for new issues' in prompts.REVIEW_PR
-        assert 'already reviewed' in prompts.REVIEW_PR.lower()
+        assert 're-review' in prompts.RE_REVIEW_PR.lower()
+        assert '{owner}' in prompts.RE_REVIEW_PR
+        assert '{github_user}' in prompts.RE_REVIEW_PR
+        assert 'gh pr review {number} --approve' in prompts.RE_REVIEW_PR
+        assert 'without any additional comments' in prompts.RE_REVIEW_PR
+
+    def test_review_pr_has_no_rereview_logic(self) -> None:
+        """
+        Compute that REVIEW_PR does NOT contain re-review instructions.
+        Re-review logic lives in the separate RE_REVIEW_PR prompt.
+
+        Returns:
+            None
+        """
+
+        assert 'RE-REVIEW' not in prompts.REVIEW_PR
+        assert 'exactly two possible actions' not in prompts.REVIEW_PR
 
     def test_review_pr_has_thread_dedup(self) -> None:
         """
@@ -169,6 +183,15 @@ class TestPromptsModule:
             pr_body='body',
             head_ref='feature',
             base_ref='main',
+            diff='diff',
+            formatted_comments='comments',
+            owner='testorg',
+            repo='testrepo',
+            github_user='zero-bang',
+        )
+        prompts.RE_REVIEW_PR.format(
+            number=1,
+            title='test',
             diff='diff',
             formatted_comments='comments',
             owner='testorg',

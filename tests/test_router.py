@@ -188,6 +188,70 @@ class TestClassify:
         assert task.diff == 'diff --git a/file.py'
         assert task.head_ref == 'feature-branch'
 
+    def test_review_request_becomes_re_review_when_agent_reviewed(self) -> None:
+        """
+        Compute that review_requested maps to re_review when agent has
+        already reviewed the PR.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {
+            'id': '789',
+            'reason': 'review_requested',
+            'subject': {'title': 'Add feature', 'type': 'PullRequest'},
+        }
+        context = {
+            'owner': 'testorg',
+            'repo': 'myrepo',
+            'number': 5,
+            'subject_type': 'PullRequest',
+            'body': 'Added feature X',
+            'labels': [],
+            'comments': [],
+            'actor': '',
+            'diff': 'diff --git a/file.py',
+            'head_ref': 'feature-branch',
+            'base_ref': 'main',
+            'has_agent_reviewed': True,
+        }
+        task = classify(notification, context, config)
+        assert task.event_type == 're_review'
+
+    def test_review_request_stays_review_request_when_not_reviewed(self) -> None:
+        """
+        Compute that review_requested stays review_request when agent has
+        NOT reviewed the PR yet.
+
+        Returns:
+            None
+        """
+
+        config = _make_config()
+        notification = {
+            'id': '789',
+            'reason': 'review_requested',
+            'subject': {'title': 'Add feature', 'type': 'PullRequest'},
+        }
+        context = {
+            'owner': 'testorg',
+            'repo': 'myrepo',
+            'number': 5,
+            'subject_type': 'PullRequest',
+            'body': 'Added feature X',
+            'labels': [],
+            'comments': [],
+            'actor': '',
+            'diff': 'diff --git a/file.py',
+            'head_ref': 'feature-branch',
+            'base_ref': 'main',
+            'has_agent_reviewed': False,
+        }
+        task = classify(notification, context, config)
+        assert task.event_type == 'review_request'
+
     def test_ci_activity_event(self) -> None:
         """
         Compute that ci_activity notification maps to ci_failure event type.

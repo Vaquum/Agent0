@@ -711,6 +711,11 @@ class Poller:
             all_comments.sort(key=lambda c: c.get('created_at', ''))
             context['comments'] = all_comments
 
+            agent_user = self._config.github_user.lower()
+            context['has_agent_reviewed'] = any(
+                r.get('user', {}).get('login', '').lower() == agent_user for r in reviews
+            )
+
         else:
             issue = await self._client.get_issue(owner, repo, number)
             context['title'] = issue.get('title', '')
