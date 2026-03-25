@@ -186,10 +186,11 @@ Conversation:
    gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login=="{github_user}") | {{id: .id, path: .path, line: .line, body: .body}}'
    ```
 2. For each of your previous comments, check whether the issue was fixed in the current diff.
-3. If ALL your previous comments are resolved (without any additional comments):
+3. If ALL your previous comments are resolved, approve:
    ```bash
    gh pr review {number} --approve
    ```
+   This command must be run exactly as shown. Do not add --body or any other flags.
 4. If some issues remain, reply to those specific threads explaining what is still wrong:
    ```bash
    gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="This is still not addressed: ..."
@@ -197,7 +198,14 @@ Conversation:
 5. After replying to unresolved threads, submit a changes-requested review:
    ```bash
    gh pr review {number} --request-changes --body "Some items from my previous review still need to be addressed. See my replies on the relevant threads."
-   ```"""
+   ```
+
+## Rules
+
+- Submit exactly ONE review action. Do not run `gh pr review` more than once.
+- When approving, run `gh pr review {number} --approve` with no other flags. No --body. No comment.
+- Do not use `gh pr comment` or `gh issue comment`.
+- Do not write any summary, commentary, or praise."""
 
 
 CI_FAILURE = """CI checks have failed on your PR #{number}: "{title}"
