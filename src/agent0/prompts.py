@@ -205,7 +205,7 @@ Conversation:
 - Submit exactly ONE review action. Do not run `gh pr review` more than once.
 - When approving, run `gh pr review {number} --approve` with no other flags. No --body. No comment.
 - Do not use `gh pr comment` or `gh issue comment`.
-- Do not write any summary, commentary, or praise."""
+- Do not write any additional summary, commentary, or praise beyond the exact --body text specified in step 5 for changes-requested reviews."""
 
 
 CI_FAILURE = """CI checks have failed on your PR #{number}: "{title}"

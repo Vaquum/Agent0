@@ -230,6 +230,7 @@ class TestBuildPrompt:
         assert 're-review' in prompt.lower()
         assert 'Submit exactly ONE review action' in prompt
         assert 'gh pr review' in prompt
+        assert 'do not add --body' in prompt.lower()
 
     def test_review_request_has_no_rereview_logic(self) -> None:
         """
