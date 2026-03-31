@@ -64,7 +64,8 @@ class TestPromptsModule:
         assert '{owner}' in prompts.RE_REVIEW_PR
         assert '{github_user}' in prompts.RE_REVIEW_PR
         assert 'gh pr review {number} --approve' in prompts.RE_REVIEW_PR
-        assert 'without any additional comments' in prompts.RE_REVIEW_PR
+        assert 'Do not add --body' in prompts.RE_REVIEW_PR
+        assert 'gh pr review` exactly once per execution' in prompts.RE_REVIEW_PR
 
     def test_review_pr_has_no_rereview_logic(self) -> None:
         """
