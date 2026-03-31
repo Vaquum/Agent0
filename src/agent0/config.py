@@ -18,6 +18,7 @@ class Config:
         github_token (str): PAT for Agent0 with repo and notifications scopes
         anthropic_api_key (str): API key for Claude Code
         github_user (str): GitHub username for the agent
+        claude_model (str): Model identifier for Claude Code CLI --model flag
         whitelisted_orgs (tuple[str, ...]): Organizations to respond to
         agent0_repo (str): Repository name for Agent0 itself (e.g. 'Agent0')
         poll_interval (int): Seconds between notification polls
@@ -34,6 +35,7 @@ class Config:
     github_token: str
     anthropic_api_key: str
     github_user: str
+    claude_model: str
     whitelisted_orgs: tuple[str, ...]
     agent0_repo: str = 'Agent0'
     poll_interval: int = 30
@@ -81,6 +83,7 @@ class Config:
         return (
             f'github_token={_mask(self.github_token)} '
             f'anthropic_api_key={_mask(self.anthropic_api_key)} '
+            f'claude_model={self.claude_model} '
             f'poll_interval={self.poll_interval} '
             f'whitelisted_orgs={",".join(self.whitelisted_orgs)} '
             f'agent0_repo={self.agent0_repo} '
@@ -137,6 +140,11 @@ def load_config() -> Config:
         log.error('E1001: GITHUB_USER environment variable is required')
         sys.exit(1)
 
+    claude_model = os.environ.get('CLAUDE_MODEL', '')
+    if not claude_model:
+        log.error('E1001: CLAUDE_MODEL environment variable is required')
+        sys.exit(1)
+
     orgs_raw = os.environ.get('WHITELISTED_ORGS', '')
     whitelisted_orgs = tuple(org.strip() for org in orgs_raw.split(',') if org.strip())
 
@@ -158,6 +166,7 @@ def load_config() -> Config:
         github_token=github_token,
         anthropic_api_key=anthropic_api_key,
         github_user=github_user,
+        claude_model=claude_model,
         whitelisted_orgs=whitelisted_orgs,
         agent0_repo=agent0_repo,
         poll_interval=poll_interval,

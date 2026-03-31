@@ -16,6 +16,7 @@ def make_config():
             'github_token': 'test-token',
             'anthropic_api_key': 'test-key',
             'github_user': 'zero-bang',
+            'claude_model': 'test-model',
             'whitelisted_orgs': ('Vaquum',),
         }
         if tmp_path is not None:

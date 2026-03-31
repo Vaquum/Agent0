@@ -46,6 +46,21 @@ class TestLoadConfig:
         with pytest.raises(SystemExit):
             load_config()
 
+    def test_missing_claude_model_exits(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """
+        Compute that missing CLAUDE_MODEL causes SystemExit.
+
+        Returns:
+            None
+        """
+
+        monkeypatch.setenv('GITHUB_TOKEN', 'test-token')
+        monkeypatch.setenv('ANTHROPIC_API_KEY', 'test-key')
+        monkeypatch.setenv('GITHUB_USER', 'test-bot')
+        monkeypatch.delenv('CLAUDE_MODEL', raising=False)
+        with pytest.raises(SystemExit):
+            load_config()
+
     def test_defaults_applied(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """
         Compute that default values are applied correctly.
@@ -57,6 +72,7 @@ class TestLoadConfig:
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test123')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test123')
         monkeypatch.setenv('GITHUB_USER', 'my-bot')
+        monkeypatch.setenv('CLAUDE_MODEL', 'claude-opus-4-6')
         monkeypatch.setenv('WHITELISTED_ORGS', 'myorg')
         for key in ('POLL_INTERVAL', 'EXECUTOR_TIMEOUT', 'MAX_TURNS', 'LOG_LEVEL', 'DATA_DIR'):
             monkeypatch.delenv(key, raising=False)
@@ -81,6 +97,7 @@ class TestLoadConfig:
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_custom')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-custom')
         monkeypatch.setenv('GITHUB_USER', 'custom-bot')
+        monkeypatch.setenv('CLAUDE_MODEL', 'claude-opus-4-6')
         monkeypatch.setenv('POLL_INTERVAL', '60')
         monkeypatch.setenv('WHITELISTED_ORGS', 'orgA, orgB, orgC')
         monkeypatch.setenv('EXECUTOR_TIMEOUT', '300')
@@ -105,6 +122,7 @@ class TestLoadConfig:
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
         monkeypatch.setenv('GITHUB_USER', 'test-bot')
+        monkeypatch.setenv('CLAUDE_MODEL', 'claude-opus-4-6')
         monkeypatch.setenv('WHITELISTED_ORGS', ' org1 , org2 , , org3 ')
 
         config = load_config()
@@ -121,6 +139,7 @@ class TestLoadConfig:
         monkeypatch.setenv('GITHUB_TOKEN', 'ghp_test')
         monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
         monkeypatch.setenv('GITHUB_USER', 'test-bot')
+        monkeypatch.setenv('CLAUDE_MODEL', 'claude-opus-4-6')
         monkeypatch.setenv('WHITELISTED_ORGS', ' , , ')
 
         with pytest.raises(
@@ -142,6 +161,7 @@ class TestConfig:
             github_token='test',
             anthropic_api_key='test',
             github_user='test-bot',
+            claude_model='test-model',
             whitelisted_orgs=('testorg',),
             data_dir=Path('/mydata'),
         )
@@ -159,6 +179,7 @@ class TestConfig:
             github_token='test',
             anthropic_api_key='test',
             github_user='test-bot',
+            claude_model='test-model',
             whitelisted_orgs=('testorg',),
             data_dir=Path('/mydata'),
         )
@@ -176,6 +197,7 @@ class TestConfig:
             github_token='ghp_abcdef123456789',
             anthropic_api_key='sk-ant-abcdef123456789',
             github_user='test-bot',
+            claude_model='test-model',
             whitelisted_orgs=('testorg',),
         )
         redacted = config.log_redacted()
@@ -196,6 +218,7 @@ class TestConfig:
             github_token='short',
             anthropic_api_key='tiny',
             github_user='test-bot',
+            claude_model='test-model',
             whitelisted_orgs=('testorg',),
         )
         redacted = config.log_redacted()
@@ -215,6 +238,7 @@ class TestConfig:
             github_token='test',
             anthropic_api_key='test',
             github_user='test-bot',
+            claude_model='test-model',
             whitelisted_orgs=('testorg',),
         )
         with pytest.raises(AttributeError):

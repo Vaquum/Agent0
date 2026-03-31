@@ -24,6 +24,7 @@ def _make_config(tmp_path: Path) -> Config:
         github_token='test-token',
         anthropic_api_key='test-key',
         github_user='zero-bang',
+        claude_model='test-model',
         whitelisted_orgs=('vaquum',),
         data_dir=tmp_path,
     )
@@ -267,6 +268,7 @@ class TestScanMultipleOrgs:
             github_token='test-token',
             anthropic_api_key='test-key',
             github_user='zero-bang',
+            claude_model='test-model',
             whitelisted_orgs=('orgA', 'orgB'),
             data_dir=tmp_path,
         )
