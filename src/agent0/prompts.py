@@ -202,7 +202,8 @@ Conversation:
 
 ## Rules
 
-- Submit exactly ONE review action. Do not run `gh pr review` more than once.
+- Run `gh pr review` exactly once per execution. Do not run `gh pr review` more than once.
+- You may call `gh api` to reply to multiple unresolved threads before that single `gh pr review` command.
 - When approving, run `gh pr review {number} --approve` with no other flags. No --body. No comment.
 - Do not use `gh pr comment` or `gh issue comment`.
 - Do not write any additional summary, commentary, or praise beyond the exact --body text specified in step 5 for changes-requested reviews."""

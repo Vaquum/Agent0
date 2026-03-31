@@ -228,7 +228,7 @@ class TestBuildPrompt:
         prompt = _build_prompt(ctx, config)
 
         assert 're-review' in prompt.lower()
-        assert 'Submit exactly ONE review action' in prompt
+        assert 'gh pr review` exactly once per execution' in prompt
         assert 'gh pr review' in prompt
         assert 'do not add --body' in prompt.lower()
 
