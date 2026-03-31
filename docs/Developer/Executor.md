@@ -13,7 +13,7 @@ The executor is the bridge between Agent0's notification pipeline and Claude Cod
 The executor invokes the Claude Code CLI with these flags:
 
 ```
-claude --print --verbose --output-format stream-json --dangerously-skip-permissions --max-turns N
+claude --print --verbose --output-format stream-json --dangerously-skip-permissions --model claude-opus-4-6 --max-turns N
 ```
 
 | Flag | Purpose |
@@ -22,6 +22,7 @@ claude --print --verbose --output-format stream-json --dangerously-skip-permissi
 | `--verbose` | Includes token counts, cost, and turn metadata in output |
 | `--output-format stream-json` | One JSON object per line, streaming as the agent works |
 | `--dangerously-skip-permissions` | Skips tool permission prompts (required for unattended execution) |
+| `--model claude-opus-4-6` | Pins the model to Claude Opus 4.6 |
 | `--max-turns N` | Limits agentic turns to prevent runaway sessions |
 
 The prompt is piped through stdin. Three environment variables are set:
