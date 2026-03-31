@@ -336,6 +336,8 @@ async def run(
         '--output-format',
         'stream-json',
         '--dangerously-skip-permissions',
+        '--model',
+        config.claude_model,
         '--max-turns',
         str(config.max_turns),
     ]

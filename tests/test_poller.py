@@ -26,6 +26,7 @@ def _make_config() -> Config:
         github_token='test-token',
         anthropic_api_key='test-key',
         github_user='test-bot',
+        claude_model='test-model',
         whitelisted_orgs=('testorg', 'otherorg'),
     )
 
