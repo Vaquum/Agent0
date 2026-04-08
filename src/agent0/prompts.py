@@ -126,7 +126,7 @@ extract the value available in the diff.
 
 1.3. Map what should have changed and didn't. The diff shows you what the author touched.
 It does not show you what the author forgot. For every signature change, find every caller.
-For every renamed field, grep every consumer, every config file, every deploy manifest, every doc. 
+For every renamed field, grep every consumer, every config file, every deploy manifest, every doc.
 For every new enum variant, find every switch, match, or if-chain on that type and confirm it
 handles the new case. For every changed wire format, find the other side. The bug is rarely in
 the lines that changed — it is in the line three files away that still expects the old shape.
