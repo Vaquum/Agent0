@@ -9,11 +9,10 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import anthropic
-
 
 DEFAULT_RELEASE_DOCS_URL = (
     'https://raw.githubusercontent.com/'
@@ -34,7 +33,7 @@ URL_FETCH_TIMEOUT = 30
 def fetch_url(url: str) -> str:
     """Fetch content from a URL with timeout and error handling."""
     try:
-        with urllib.request.urlopen(url, timeout=URL_FETCH_TIMEOUT) as response:  # noqa: S310
+        with urllib.request.urlopen(url, timeout=URL_FETCH_TIMEOUT) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         raise RuntimeError(f'HTTP error fetching {url}: {e.code} {e.reason}') from e
@@ -94,7 +93,7 @@ def create_prompt() -> str:
     docs = fetch_url(RELEASE_DOCS_URL)
     version = get_current_version()
     git_log = get_git_log_since_last_tag()
-    current_date = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+    current_date = datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')
 
     prompt = f"""You are creating a new release for the Agent0 project.
 
@@ -177,7 +176,7 @@ def parse_claude_response(response_text: str) -> dict:
                 brace_count -= 1
                 if brace_count == 0:
                     # Found matching brace
-                    json_str = response_text[start:i+1]
+                    json_str = response_text[start : i + 1]
                     try:
                         return json.loads(json_str)
                     except json.JSONDecodeError as e:
@@ -268,11 +267,7 @@ def main() -> None:
 
     try:
         message = client.messages.create(
-            model=model,
-            max_tokens=4096,
-            messages=[
-                {'role': 'user', 'content': prompt}
-            ]
+            model=model, max_tokens=4096, messages=[{'role': 'user', 'content': prompt}]
         )
 
         response_text = message.content[0].text
@@ -297,14 +292,12 @@ def main() -> None:
         # Create git tag
         create_git_tag(
             release_info['tag'],
-            f'Release {release_info["version"]}: {release_info["release_name"]}'
+            f'Release {release_info["version"]}: {release_info["release_name"]}',
         )
 
         # Create GitHub release
         create_github_release(
-            release_info['tag'],
-            release_info['release_name'],
-            release_info['release_notes']
+            release_info['tag'], release_info['release_name'], release_info['release_notes']
         )
 
         print('\n✓ Release created successfully!')

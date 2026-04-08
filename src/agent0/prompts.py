@@ -204,10 +204,6 @@ overall review summary instead of forcing an extra finding.
 1.18. Ask one forward-looking question. Given this change, what is the next
 predictable failure mode? Name a specific scenario, not a vague category.
 
-1.19. Triage debt. If any review comment — yours or another reviewer's — names
-technical debt, duplication, or a known gap, it must become a tracked issue
-or an explicit Won't Fix with justification before you approve.
-
 2. Check existing review threads from other reviewers:
    ```bash
    gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | {{id: .id, path: .path, line: .line, body: .body, user: .user.login}}'
