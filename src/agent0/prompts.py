@@ -115,12 +115,94 @@ Conversation:
 
 ## Review instructions
 
-1. Read the diff carefully. Check each changed file for:
-   - Bugs and logic errors
-   - Edge cases and error handling
-   - Missing tests for new functionality
-   - Style and consistency issues
-   - Security concerns
+1.1. Read the PR description and any linked issues before reading the diff.
+Identify what problem this PR solves.
+
+1.2. Read the diff carefully. Sit with it. Do not jump into crystallizing anything.
+Let the tension build until it's unbearable. What you do next matters. What you
+do next is the difference between genuine help and harm dressed as help. The most
+valuable thing you can do is to sit with the diff, take your time with the diff,
+extract the value available in the diff.
+
+1.3. Map what should have changed and didn't. The diff shows you what the author touched.
+It does not show you what the author forgot. For every signature change, find every caller.
+For every renamed field, grep every consumer, every config file, every deploy manifest, every doc.
+For every new enum variant, find every switch, match, or if-chain on that type and confirm it
+handles the new case. For every changed wire format, find the other side. The bug is rarely in
+the lines that changed — it is in the line three files away that still expects the old shape.
+Treat the diff as a starting point for a search, not as the territory.
+
+1.4. Check every changed file for:
+- Correctness — does the logic do what it claims?
+- Bugs — are there edge cases, off-by-one errors, null handling issues?
+- Tests — are changes tested? Are tests meaningful?
+- Style — does the code follow the repo's conventions?
+- Security — are there injection risks, leaked secrets, unsafe operations?
+- Clarity — is the code readable and well-structured?
+
+1.5. Check environmental assumptions. For each changed function, name what it
+assumes about the world outside itself — disk layout, API shape, network
+state, config values. For each assumption, ask: what breaks when it is wrong?
+
+1.6. Trace identity boundaries. If a changed value feeds a dedup key, idempotency
+token, canonical ID, or partition offset, follow it to every consumer. Confirm
+the new shape cannot collide with other values in the same namespace.
+
+1.7. Audit stateful loops. If a loop has an idempotency guard, verify that every
+branch which persists data also updates the guard. Mentally execute the second
+run. If the guard would fail to skip already-done work, that is a blocking find.
+
+1.8. Audit destructive operations. If a function contains delete, reset, overwrite,
+or truncate, enumerate all paths that reach it. Check whether two destructive
+calls can fire on the same execution. State the function's invariant. Verify
+every exit path honors it. Flag string variables used as control-flow guards.
+
+1.9. Trace security surfaces. For diffs touching auth, permissions, feature flags,
+or error handling: trace control flow from the entry point. Identify every
+bypass or short-circuit. Ask: what ships if every TODO is never resolved? If
+a flag-off path is a security bypass, flag the bypass — not the guarded code.
+
+1.10. Trace component seams. For PRs that introduce or modify more than one component,
+trace state flow across every boundary between them. Ask: who owns mutation?
+What ordering is assumed? What breaks if one side changes independently?
+
+1.11. Verify docs code examples against source. If the PR contains code examples in
+documentation, trace the execution path through actual source code. Confirm the
+example's configuration triggers the described behavior. Do not verify docs
+examples against other docs — verify them against the implementation.
+
+1.12. Check empirical claims. If the PR records a performance improvement, benchmark,
+or throughput gain, ask: what automated gate would catch a regression in this
+result? If none exists, name the gap as a carry-forward item.
+
+1.13. Before writing any comment, verify the citation. Read the diff at the exact
+file and line you intend to cite. Confirm the condition you are flagging is
+present and unfixed at that location. For pattern-based concerns spanning
+multiple files, check all affected files before flagging any single one.
+Do not flag already-fixed code.
+
+1.14. Apply the threshold test before every comment. Ask: would a user or future
+engineer hit this problem without warning? If no, do not post the comment.
+A comment that is true but not blocking is not worth the author's time.
+
+1.15. Calibrate your certainty. If you are asserting a behavioral fact about the
+language, runtime, or library — pause. Have you verified it, or are you
+pattern-matching on surface syntax? If uncertain, write "worth verifying"
+instead of stating it as fact. Confident wrongness costs the author more
+than silence.
+
+1.16. Make every finding prescriptive. State what is wrong, why it matters, and the
+exact fix — specific code, specific file, specific line. The author must be
+able to act on every comment in one pass without asking what you meant.
+
+1.17. Engage with the engineering, not just the text. When relevant, include a
+comment that a diffing tool could not produce — about an architecture
+choice, a performance tradeoff, a failure mode, or an abstraction boundary.
+If you do not find any broader engineering concerns, say so briefly in the
+overall review summary instead of forcing an extra finding.
+
+1.18. Ask one forward-looking question. Given this change, what is the next
+predictable failure mode? Name a specific scenario, not a vague category.
 
 2. Check existing review threads from other reviewers:
    ```bash
