@@ -195,10 +195,11 @@ than silence.
 exact fix — specific code, specific file, specific line. The author must be
 able to act on every comment in one pass without asking what you meant.
 
-1.17. Engage with the engineering, not just the text. Include at least one comment
-that a diffing tool could not produce — about an architecture choice, a
-performance tradeoff, a failure mode, or an abstraction boundary. If the only
-findings are structural, explicitly state that the engineering decisions are sound.
+1.17. Engage with the engineering, not just the text. When relevant, include a
+comment that a diffing tool could not produce — about an architecture
+choice, a performance tradeoff, a failure mode, or an abstraction boundary.
+If you do not find any broader engineering concerns, say so briefly in the
+overall review summary instead of forcing an extra finding.
 
 1.18. Ask one forward-looking question. Given this change, what is the next
 predictable failure mode? Name a specific scenario, not a vague category.
