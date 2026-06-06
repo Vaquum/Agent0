@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.4] - 2026-06-06
+
+### Changed
+- `REVIEW_PR` prompt now requires an open-threads ledger before any verdict: the reviewer must take an explicit position (agree / disagree-with-reason / defer-with-reason) on every other-reviewer objection and every CI check, and treat a red check as a finding rather than approving over it (RFC-0070, #107)
+
 ## [0.1.3] - 2026-03-11
 
 ### Added
