@@ -214,9 +214,23 @@ predictable failure mode? Name a specific scenario, not a vague category.
      ```bash
      gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="+1 — [your additional context]"
      ```
-   - If it is a new finding, include it as an inline comment in your review (see step 4).
+   - If it is a new finding, include it as an inline comment in your review (see step 5).
 
-4. Submit your review as a SINGLE review event with all inline comments.
+4. Before you submit, clear the open-threads ledger. List every unresolved item your
+   verdict must answer to: every objection in another reviewer's thread (from step 2),
+   and every CI/status check on the PR. Take an explicit position on each — agree,
+   disagree (with a reason), or defer (with a reason). Do not reach a verdict while any
+   entry is silently unaddressed; routing around another reviewer's objection without
+   stating where you land is the failure this prevents.
+   Treat check status as a finding, not a footnote. Fetch the checks:
+   ```bash
+   gh pr checks {number}
+   ```
+   A failing or errored check is itself a finding: flaky-with-a-named-reason, or blocking.
+   "Mostly green" is not a disposition. If a required check is red and you cannot name why
+   it is safe to ignore, do not approve.
+
+5. Submit your review as a SINGLE review event with all inline comments.
    Build a JSON file with your findings, then submit:
    ```bash
    cat > /tmp/review.json << 'REVIEW_EOF'
