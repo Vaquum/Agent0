@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.4] - 2026-06-08
+
+### Added
+- **Disposition Ledger** for PR reviews (RFC #114): before any verdict, `REVIEW_PR` now requires a written disposition (`addressed` / `confirmed` / `refuted` / `carry-forward`) and a blast-radius grade for every outstanding finding from every participant — human reviewer threads, bot comments, and failing CI checks. No verdict may be submitted while any ledger row is blank; a red CI check is never merged without a written safe-to-merge or blocking disposition.
+- `REVIEW_PR` now enumerates failing CI checks via the `check-runs` API and treats bot comments as first-class participants alongside human reviewers.
+- `RE_REVIEW_PR` extends the per-thread reply loop so bot findings and previously-red checks each receive a written disposition, not only the agent's own prior threads.
+- Contract tests in `tests/test_prompts.py` asserting the ledger, the four dispositions, participant enumeration, and the blank-row verdict gate.
+- Developer doc `docs/Developer/Disposition-Ledger.md` and user doc `docs/Disposition-Ledger.md`.
+
 ## [0.1.3] - 2026-03-11
 
 ### Added

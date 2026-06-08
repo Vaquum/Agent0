@@ -24,6 +24,7 @@ Agent0 is a daemon that operates as an autonomous software engineer on GitHub. I
 | [Configuration](Configuration.md) | Every environment variable, defaults, production vs development |
 | [Pipeline](Pipeline.md) | Notification lifecycle from GitHub webhook to executed task |
 | [Executor](Executor.md) | Claude Code CLI integration, prompt templates, PTY streaming, output parsing |
+| [Disposition Ledger](Disposition-Ledger.md) | Per-participant written verdicts that gate PR-review submission |
 | [Dashboard](Dashboard.md) | Frontend architecture, API endpoints, real-time streaming |
 | [Modules](Modules.md) | Module-by-module public API reference |
 | [Deployment](Deployment.md) | Docker build, Render configuration, persistent storage |

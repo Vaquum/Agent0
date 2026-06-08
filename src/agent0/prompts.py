@@ -204,24 +204,64 @@ overall review summary instead of forcing an extra finding.
 1.18. Ask one forward-looking question. Given this change, what is the next
 predictable failure mode? Name a specific scenario, not a vague category.
 
-2. Check existing review threads from other reviewers:
-   ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | {{id: .id, path: .path, line: .line, body: .body, user: .user.login}}'
-   ```
+2. Enumerate outstanding findings from EVERY participant. A *participant* is any source of a
+   finding on this PR: a human reviewer thread, a bot comment, or a failing CI check. Each is a
+   participant whose finding deserves a written disposition — no source is second-class.
+   - Human reviewer threads and bot comments:
+     ```bash
+     gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | {{id: .id, path: .path, line: .line, body: .body, user: .user.login}}'
+     ```
+   - Failing CI checks:
+     ```bash
+     gh api repos/{owner}/{repo}/commits/{head_ref}/check-runs --jq '.check_runs[] | select(.conclusion=="failure" or .conclusion=="timed_out" or .conclusion=="action_required" or .conclusion=="cancelled") | {{name: .name, conclusion: .conclusion, details_url: .details_url, summary: .output.summary}}'
+     ```
+     If this fetch errors, surface the error loudly in your review session and do not proceed to
+     a verdict — a check-run fetch failure is a loud failure, never a silently skipped one.
+   Every comment and every red check from this step becomes an "outstanding finding" that MUST
+   receive a row in the Disposition Ledger (step 4).
 
 3. For each issue you find:
    - If another reviewer already has an open thread on the same or similar issue, reply to their comment instead of opening a new thread:
      ```bash
      gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="+1 — [your additional context]"
      ```
-   - If it is a new finding, include it as an inline comment in your review (see step 4).
+   - If it is a new finding, include it as an inline comment in your review (see step 5).
 
-4. Submit your review as a SINGLE review event with all inline comments.
+4. Build the **Disposition Ledger** and include it in your review body. The ledger makes every
+   finding's fate an explicit, written decision rather than implicit attention following the
+   most eloquent argument.
+   - One row per outstanding finding, drawn from ALL THREE participant classes in step 2
+     (human reviewer threads, bot comments, failing CI checks). A finding you raise yourself
+     also gets a row.
+   - Each row carries exactly one **disposition**:
+     - `addressed` — fixed; cite the resolving commit SHA or file:line.
+     - `confirmed` — still a real problem; blocking.
+     - `refuted` — investigated and shown NOT to be a problem; give the reasoning.
+     - `carry-forward` — real but out of scope; named for a follow-up.
+   - Each row carries a **blast-radius** grade — `high` / `med` / `low` — the breadth of harm if
+     the finding is real and merges: how many call sites, users, or downstream consumers are
+     affected. Order the rows by blast radius, descending.
+   - Render it in the review body in this format:
+     ```
+     Disposition Ledger (ordered by blast radius):
+     - [high]  bot: unbounded retry on 5xx — confirmed, blocking. See inline on poller.py:88.
+     - [med]   reviewer @x: dedup key collision — addressed in a1b2c3d.
+     - [med]   CI: pyright failing on executor.py — confirmed, blocking; type error is real.
+     - [low]   reviewer @y: rename suggestion — carry-forward, noted for follow-up.
+     ```
+   - **HARD RULE: no verdict may be submitted while any ledger row's disposition is blank.** A
+     `refuted` or `carry-forward` is a valid disposition; a blank is not. Every `addressed` MUST
+     cite a commit or line; every `refuted` MUST give reasoning. A red CI check MUST receive a
+     written safe-to-merge or blocking disposition — never wave a red check through silently.
+   - If there are genuinely no outstanding findings from any participant, say so explicitly:
+     `Disposition Ledger: no outstanding findings from any participant.`
+
+5. Submit your review as a SINGLE review event with all inline comments.
    Build a JSON file with your findings, then submit:
    ```bash
    cat > /tmp/review.json << 'REVIEW_EOF'
    {{
-     "body": "Brief overall summary of the review",
+     "body": "Brief overall summary of the review.\n\nDisposition Ledger (ordered by blast radius):\n- [high] ...\n- [med] ...",
      "event": "REQUEST_CHANGES",
      "comments": [
        {{"path": "src/example.py", "line": 42, "body": "Description of the issue"}},
@@ -232,13 +272,22 @@ predictable failure mode? Name a specific scenario, not a vague category.
    gh api repos/{owner}/{repo}/pulls/{number}/reviews --method POST --input /tmp/review.json
    ```
 
-   If the code looks good with no issues:
+   If the code looks good with no issues, still emit the ledger in the approval body (it states
+   the disposition of any participant findings, or that there were none):
    ```bash
-   gh pr review {number} --approve --body "LGTM"
+   gh pr review {number} --approve --body "LGTM
+
+   Disposition Ledger (ordered by blast radius):
+   - [low] CI: all checks green — no outstanding findings.
+   - reviewer @x: nit on naming — refuted, the current name matches repo convention."
    ```
 
 ## Rules
 
+- **HARD RULE: the review body MUST contain a Disposition Ledger** with a non-blank \
+disposition for every outstanding finding from every participant — human reviewer threads, \
+bot comments, and failing CI checks. No verdict may be submitted while any ledger row is blank. \
+A red CI check is never merged without a written safe-to-merge or blocking disposition.
 - **HARD RULE: `REQUEST_CHANGES` requires inline comments.** You may ONLY submit a \
 `REQUEST_CHANGES` review when you have at least one inline comment on a specific file \
 and line. The review body is a summary — it must NEVER be the sole source of a change \
@@ -263,20 +312,36 @@ PR diff:
 Conversation:
 {formatted_comments}
 
-1. Fetch your previous inline comments:
-   ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login=="{github_user}") | {{id: .id, path: .path, line: .line, body: .body}}'
-   ```
-2. For each of your previous comments, check whether the issue was fixed in the current diff.
-3. If ALL your previous comments are resolved, approve:
+1. Fetch the findings from EVERY participant — not only your own prior threads. Each participant
+   (your threads, other reviewers, bots, and previously-red CI checks) gets a written disposition
+   reply about whether it is now resolved or why it remains.
+   - Your previous inline comments:
+     ```bash
+     gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login=="{github_user}") | {{id: .id, path: .path, line: .line, body: .body}}'
+     ```
+   - Other reviewer and bot comments (bots are participants too — give them the same courtesy):
+     ```bash
+     gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.user.login!="{github_user}") | {{id: .id, path: .path, line: .line, body: .body, user: .user.login}}'
+     ```
+   - Current CI check status (to confirm previously-red checks are now green or still failing):
+     ```bash
+     gh api repos/{owner}/{repo}/commits/$(gh api repos/{owner}/{repo}/pulls/{number} --jq .head.sha)/check-runs --jq '.check_runs[] | {{name: .name, conclusion: .conclusion, summary: .output.summary}}'
+     ```
+     If this fetch errors, surface it loudly and do not proceed to a verdict.
+2. For each finding above, check whether it was fixed in the current diff and assign a written
+   disposition (`addressed` / `confirmed` / `refuted` / `carry-forward`).
+3. If ALL findings from every participant are resolved (your threads, bot threads, and CI checks
+   all green), approve:
    ```bash
    gh pr review {number} --approve
    ```
    This command must be run exactly as shown. Do not add --body or any other flags.
-4. If some issues remain, reply to those specific threads explaining what is still wrong:
+4. If some findings remain, reply to each unresolved thread — including bot threads — with its
+   disposition explaining what is still wrong:
    ```bash
    gh api repos/{owner}/{repo}/pulls/{number}/comments/COMMENT_ID/replies --method POST -f body="This is still not addressed: ..."
    ```
+   A previously-red check has no inline thread, so state its disposition in the step 5 review body.
 5. After replying to unresolved threads, submit a changes-requested review:
    ```bash
    gh pr review {number} --request-changes --body "Some items from my previous review still need to be addressed. See my replies on the relevant threads."
@@ -286,9 +351,12 @@ Conversation:
 
 - Run `gh pr review` exactly once per execution. Do not run `gh pr review` more than once.
 - You may call `gh api` to reply to multiple unresolved threads before that single `gh pr review` command.
+- Every participant — your threads, other reviewer/bot threads, and previously-red CI checks — must \
+receive a written disposition: a reply on its thread, or (for a check, which has no thread) a line \
+in the changes-requested review body.
 - When approving, run `gh pr review {number} --approve` with no other flags. No --body. No comment.
 - Do not use `gh pr comment` or `gh issue comment`.
-- Do not write any additional summary, commentary, or praise beyond the exact --body text specified in step 5 for changes-requested reviews."""
+- Do not write any additional summary, commentary, or praise beyond the exact --body text specified in step 5 for changes-requested reviews, plus the per-check dispositions that loop-closing requires."""
 
 
 CI_FAILURE = """CI checks have failed on your PR #{number}: "{title}"
