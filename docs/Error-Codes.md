@@ -42,6 +42,7 @@ All codes follow the pattern `E<category><number>`:
 | E3003 | Git checkout failed | Branch doesn't exist or workspace is corrupted |
 | E3004 | Git reset failed | Workspace is in a bad state |
 | E3005 | Git clean failed | Permission issue on workspace files |
+| E3006 | Git reset (recovery) failed | Non-fatal warning. A recovery `git reset --hard` runs before checkout to clear a conflicted/unmerged index left by a prior task (e.g. a half-finished merge/rebase/cherry-pick), so the workspace cannot stay wedged on `error: you need to resolve your current index first`. If this recovery itself fails, the subsequent checkout still surfaces the problem loudly as E3003. |
 
 ### E4xxx — Executor / Claude Code
 
