@@ -81,9 +81,9 @@ def _is_at_or_after(timestamp: str, start: str) -> bool:
     try:
         ts = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
         st = datetime.fromisoformat(start.replace('Z', '+00:00'))
-    except (ValueError, AttributeError):
+        return ts >= st
+    except (ValueError, AttributeError, TypeError):
         return False
-    return ts >= st
 
 
 class Scheduler:
