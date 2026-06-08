@@ -105,7 +105,7 @@ class WorkspaceManager:
             log.info('Cloning %s/%s', owner, repo)
             workspace.parent.mkdir(parents=True, exist_ok=True)
 
-            returncode, _stdout, stderr = await self._run_git(
+            returncode, _, stderr = await self._run_git(
                 ['clone', self._clone_url(owner, repo), str(workspace)],
             )
             if returncode != 0:
@@ -130,6 +130,22 @@ class WorkspaceManager:
                 default_branch = 'origin/main'
 
             branch = default_branch.removeprefix('origin/')
+
+            # Recover from any half-finished merge/rebase/cherry-pick a prior
+            # task left behind. An unmerged index makes the checkout below refuse
+            # with "you need to resolve your current index first". Resetting hard
+            # to the current HEAD clears the conflicted index (and MERGE_HEAD /
+            # CHERRY_PICK_HEAD / REVERT_HEAD) so the checkout can proceed. This is
+            # local-only: it discards uncommitted state in this clone alone and
+            # never touches the remote.
+            returncode, _, stderr = await self._run_git(
+                ['reset', '--hard'],
+                cwd=workspace,
+            )
+            if returncode != 0:
+                log.warning(
+                    'E3006: git reset (recovery) failed for %s/%s: %s', owner, repo, stderr
+                )
 
             returncode, _, stderr = await self._run_git(
                 ['checkout', branch],
