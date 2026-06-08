@@ -106,9 +106,10 @@ class TestPrepare:
 
             assert call_args[0] == ['fetch', 'origin']
             assert call_args[1] == ['rev-parse', '--abbrev-ref', 'origin/HEAD']
-            assert call_args[2] == ['checkout', 'main']
-            assert call_args[3] == ['reset', '--hard', 'origin/main']
-            assert call_args[4] == ['clean', '-fd']
+            assert call_args[2] == ['reset', '--hard']
+            assert call_args[3] == ['checkout', 'main']
+            assert call_args[4] == ['reset', '--hard', 'origin/main']
+            assert call_args[5] == ['clean', '-fd']
 
     @pytest.mark.asyncio
     async def test_clone_failure_raises(self, tmp_path: Path) -> None:
@@ -176,7 +177,61 @@ class TestPrepare:
         with patch.object(mgr, '_run_git', side_effect=side_effect):
             await mgr.prepare('myorg', 'myrepo')
 
-        assert call_count == 5
+        assert call_count == 6
+
+    @pytest.mark.asyncio
+    async def test_recovery_reset_precedes_checkout(self, tmp_path: Path) -> None:
+        """
+        Compute that a recovery `git reset --hard` runs before checkout so a
+        conflicted index left by a prior task cannot wedge the workspace.
+
+        Returns:
+            None
+        """
+
+        config = _make_config(tmp_path)
+        mgr = WorkspaceManager(config)
+
+        workspace = tmp_path / 'workspaces' / 'myorg' / 'myrepo'
+        workspace.mkdir(parents=True)
+
+        with patch.object(mgr, '_run_git', new_callable=AsyncMock) as mock_git:
+            mock_git.return_value = (0, 'origin/main', '')
+
+            await mgr.prepare('myorg', 'myrepo')
+
+            call_args = [c[0][0] for c in mock_git.call_args_list]
+            recovery_idx = call_args.index(['reset', '--hard'])
+            checkout_idx = call_args.index(['checkout', 'main'])
+            assert recovery_idx < checkout_idx
+
+    @pytest.mark.asyncio
+    async def test_recovery_reset_failure_is_non_fatal(self, tmp_path: Path) -> None:
+        """
+        Compute that a failing recovery reset does not raise on its own; the
+        loud failure path remains the checkout that follows it.
+
+        Returns:
+            None
+        """
+
+        config = _make_config(tmp_path)
+        mgr = WorkspaceManager(config)
+
+        workspace = tmp_path / 'workspaces' / 'myorg' / 'myrepo'
+        workspace.mkdir(parents=True)
+
+        async def side_effect(args: list[str], **_kwargs: object) -> tuple[int, str, str]:
+            if args[0] == 'rev-parse':
+                return (0, 'origin/main', '')
+            if args == ['reset', '--hard']:
+                return (1, '', 'recovery boom')
+            return (0, '', '')
+
+        with patch.object(mgr, '_run_git', side_effect=side_effect):
+            result = await mgr.prepare('myorg', 'myrepo')
+
+        assert result == workspace
 
 
 class TestCleanupStale:
