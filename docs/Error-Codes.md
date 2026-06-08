@@ -31,6 +31,7 @@ All codes follow the pattern `E<category><number>`:
 | E2002 | API request failed | Non-200 response from GitHub API |
 | E2003 | Unexpected API response | Response body doesn't match expected schema |
 | E2004 | Notification mark-read failed | Could not mark a notification thread as read |
+| E2005 | Assignment outcome comment failed | Non-fatal warning. Could not post the visible outcome comment on an assigned issue (on task failure, or on a success that opened no PR and left no comment). The task itself is unaffected. |
 
 ### E3xxx — Workspace / Git
 
@@ -76,3 +77,4 @@ All codes follow the pattern `E<category><number>`:
 | E7002 | CI scan error | Unhandled exception during CI failure scanning |
 | E7003 | Reflection scan error | Unhandled exception during reflection scanning |
 | E7004 | Context fetch failed | Could not fetch PR/issue context for a notification |
+| E7005 | Assignment idempotency check failed | Non-fatal warning. Could not check whether an open `agent0/issue-<n>` PR already exists for an assigned issue; the assignment proceeds (best-effort duplicate guard). |

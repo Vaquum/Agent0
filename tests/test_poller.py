@@ -413,3 +413,73 @@ class TestGitHubClient:
 
         result = await client.get_pull_request_diff('owner', 'repo', 1)
         assert result == ''
+
+    @pytest.mark.asyncio
+    async def test_get_open_pulls_by_head_queries_and_returns(self) -> None:
+        """
+        Compute that get_open_pulls_by_head queries the head branch and returns the list.
+
+        Returns:
+            None
+        """
+
+        captured: dict[str, Any] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured['url'] = str(request.url)
+            captured['params'] = dict(request.url.params)
+            return httpx.Response(200, json=[{'number': 7}])
+
+        transport = httpx.MockTransport(handler)
+        client = GitHubClient.__new__(GitHubClient)
+        client._client = httpx.AsyncClient(transport=transport, base_url='https://api.github.com')
+
+        result = await client.get_open_pulls_by_head('org', 'repo', 'agent0/issue-42')
+
+        assert result == [{'number': 7}]
+        assert '/repos/org/repo/pulls' in captured['url']
+        assert captured['params']['state'] == 'open'
+        assert captured['params']['head'] == 'org:agent0/issue-42'
+
+    @pytest.mark.asyncio
+    async def test_get_open_pulls_by_head_returns_empty(self) -> None:
+        """
+        Compute that get_open_pulls_by_head returns an empty list when no PR matches.
+
+        Returns:
+            None
+        """
+
+        transport = httpx.MockTransport(lambda request: httpx.Response(200, json=[]))
+        client = GitHubClient.__new__(GitHubClient)
+        client._client = httpx.AsyncClient(transport=transport, base_url='https://api.github.com')
+
+        result = await client.get_open_pulls_by_head('org', 'repo', 'agent0/issue-1')
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_create_issue_comment_posts_body(self) -> None:
+        """
+        Compute that create_issue_comment POSTs the comment body to the issue.
+
+        Returns:
+            None
+        """
+
+        captured: dict[str, Any] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured['method'] = request.method
+            captured['url'] = str(request.url)
+            captured['content'] = request.content.decode()
+            return httpx.Response(201, json={'id': 1})
+
+        transport = httpx.MockTransport(handler)
+        client = GitHubClient.__new__(GitHubClient)
+        client._client = httpx.AsyncClient(transport=transport, base_url='https://api.github.com')
+
+        await client.create_issue_comment('org', 'repo', 42, 'the outcome')
+
+        assert captured['method'] == 'POST'
+        assert '/repos/org/repo/issues/42/comments' in captured['url']
+        assert 'the outcome' in captured['content']

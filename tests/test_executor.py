@@ -159,6 +159,9 @@ class TestBuildPrompt:
         assert 'feature, ui' in prompt
         assert 'Create a branch named agent0/' in prompt
         assert 'Closes #42' in prompt
+        assert 'agent0/issue-42' in prompt
+        assert 'ruff check' in prompt
+        assert 'Never finish silently' in prompt
 
     def test_review_request_prompt(self) -> None:
         """

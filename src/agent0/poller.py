@@ -444,6 +444,60 @@ class GitHubClient:
         data = response.json()
         return data.get('check_suites', [])  # type: ignore[no-any-return]
 
+    async def get_open_pulls_by_head(
+        self,
+        owner: str,
+        repo: str,
+        head_ref: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Compute open pull requests whose source branch matches head_ref.
+
+        Args:
+            owner (str): Repository owner
+            repo (str): Repository name
+            head_ref (str): Source branch name, without the owner prefix
+
+        Returns:
+            list[dict[str, Any]]: Open pull request objects with this head branch
+        """
+
+        response = await self._client.get(
+            f'/repos/{owner}/{repo}/pulls',
+            params={'state': 'open', 'head': f'{owner}:{head_ref}'},
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, list):
+            raise TypeError('Expected list payload from /pulls')
+        return cast(list[dict[str, Any]], payload)
+
+    async def create_issue_comment(
+        self,
+        owner: str,
+        repo: str,
+        number: int,
+        body: str,
+    ) -> None:
+        """
+        Compute creation of a comment on an issue or pull request.
+
+        Args:
+            owner (str): Repository owner
+            repo (str): Repository name
+            number (int): Issue or pull request number
+            body (str): Comment body in markdown
+
+        Returns:
+            None
+        """
+
+        response = await self._client.post(
+            f'/repos/{owner}/{repo}/issues/{number}/comments',
+            json={'body': body},
+        )
+        response.raise_for_status()
+
     async def close(self) -> None:
         """
         Compute client shutdown.

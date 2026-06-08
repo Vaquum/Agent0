@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4] - 2026-06-08
+
+### Changed
+- Hardened the assigned-issue behaviour so it is safe to run more than once, closing the gap with the battle-tested PR-review path (PR review itself is unchanged):
+  - Idempotent: assignments use a deterministic branch `agent0/issue-<n>` and are skipped when an open PR for that issue already exists, so a restart or redelivered notification no longer opens a duplicate PR.
+  - Visible failures: a failed or timed-out assignment now comments on the issue instead of being silently marked read and dropped.
+  - Outcome check: a "successful" assignment that opened no PR and left no comment is flagged on the issue as a likely silent no-op.
+  - Stronger prompt: read surrounding code first, stay in scope, run the test suite and `ruff` before pushing, and always leave a comment describing the outcome.
+
+### Added
+- Error codes `E2005` (assignment outcome comment failed) and `E7005` (assignment idempotency check failed)
+
 ## [0.1.3] - 2026-03-11
 
 ### Added

@@ -48,6 +48,44 @@ class _RunningTask:
     started_at_utc: str
 
 
+def _comment_login(comment: dict[str, Any]) -> str:
+    """
+    Compute the lowercased author login of a GitHub comment.
+
+    Args:
+        comment (dict[str, Any]): GitHub comment object
+
+    Returns:
+        str: Lowercased login, or empty string if unavailable
+    """
+
+    user = comment.get('user', {})
+    if not isinstance(user, dict):
+        return ''
+    login = user.get('login', '')
+    return login.lower() if isinstance(login, str) else ''
+
+
+def _is_at_or_after(timestamp: str, start: str) -> bool:
+    """
+    Compute whether an ISO 8601 timestamp is at or after a start time.
+
+    Args:
+        timestamp (str): GitHub timestamp, e.g. 2026-06-08T16:58:17Z
+        start (str): Task start timestamp in ISO 8601
+
+    Returns:
+        bool: True if timestamp >= start; False if either cannot be parsed
+    """
+
+    try:
+        ts = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        st = datetime.fromisoformat(start.replace('Z', '+00:00'))
+    except (ValueError, AttributeError):
+        return False
+    return ts >= st
+
+
 class Scheduler:
     """
     Compute per-repo task scheduling with concurrency control.
@@ -231,6 +269,9 @@ class Scheduler:
                     output = self._output_buffers.get(repo_key, [])
                     await self._audit(context, result, output if output else None)
 
+                if context.event_type == 'assignment' and result is not None:
+                    await self._handle_assignment_outcome(context, result, now)
+
                 if self._poller:
                     try:
                         await self._poller.mark_read(context.notification_id)
@@ -331,6 +372,83 @@ class Scheduler:
                     }
                 )
         return tasks
+
+    async def _handle_assignment_outcome(
+        self,
+        context: TaskContext,
+        result: ExecutorResult,
+        started_at_utc: str,
+    ) -> None:
+        """
+        Compute a visible outcome on the assigned issue. Never raises.
+
+        Unlike a review, which simply goes unposted when it fails, an assignment
+        that fails or silently no-ops leaves the human assignee with nothing. On
+        failure or timeout, comment so the outcome is visible on the issue. On a
+        success that produced neither a pull request nor any comment from the
+        agent, flag the silent no-op so it does not pass unnoticed.
+
+        Args:
+            context (TaskContext): The assignment task context
+            result (ExecutorResult): Execution result
+            started_at_utc (str): UTC ISO timestamp when the task started
+
+        Returns:
+            None
+        """
+
+        if not self._client:
+            return
+
+        try:
+            if result.status in ('failure', 'timeout'):
+                await self._client.create_issue_comment(
+                    context.owner,
+                    context.repo,
+                    context.number,
+                    f'Agent0 could not complete this assignment (status: {result.status}). '
+                    'A maintainer has been notified; the issue has not been resolved.',
+                )
+                return
+
+            if result.status != 'success':
+                return
+
+            head_ref = f'agent0/issue-{context.number}'
+            pulls = await self._client.get_open_pulls_by_head(
+                context.owner, context.repo, head_ref
+            )
+            if pulls:
+                return
+
+            comments = await self._client.get_issue_comments(
+                context.owner, context.repo, context.number
+            )
+            agent = self._config.github_user.lower()
+            agent_commented = any(
+                _comment_login(c) == agent
+                and _is_at_or_after(c.get('created_at', ''), started_at_utc)
+                for c in comments
+            )
+            if agent_commented:
+                return
+
+            await self._client.create_issue_comment(
+                context.owner,
+                context.repo,
+                context.number,
+                'Agent0 finished this assignment but opened no pull request and left no '
+                'comment. This looks like a silent no-op — please re-assign or clarify '
+                'the task.',
+            )
+        except Exception:
+            log.warning(
+                'E2005: Failed to post assignment outcome for %s/%s#%d: %s',
+                context.owner,
+                context.repo,
+                context.number,
+                traceback.format_exc(),
+            )
 
     async def _report(self, error: Agent0Error) -> None:
         """
@@ -510,6 +628,24 @@ class Daemon:
 
                     task = classify(notification, context, self._config)
 
+                    if task.event_type == 'assignment' and await self._assignment_pr_exists(
+                        task.owner, task.repo, task.number
+                    ):
+                        log.info(
+                            'Skipping assignment for %s/%s#%d: PR already open',
+                            task.owner,
+                            task.repo,
+                            task.number,
+                        )
+                        try:
+                            await self._poller.mark_read(notification.get('id', ''))
+                        except Exception:
+                            log.warning(
+                                'E2004: Failed to mark already-handled assignment %s as read',
+                                notification.get('id'),
+                            )
+                        continue
+
                     if self._scheduler.has_task_for(task.owner, task.repo, task.number):
                         log.info(
                             'Skipping duplicate task for %s/%s#%d (already running/queued)',
@@ -563,6 +699,41 @@ class Daemon:
                     log.warning('E7003: Reflection scan error: %s', traceback.format_exc())
 
             await asyncio.sleep(self._config.poll_interval)
+
+    async def _assignment_pr_exists(self, owner: str, repo: str, number: int) -> bool:
+        """
+        Compute whether Agent0 already has an open PR for an assigned issue.
+
+        This is the assignment-path counterpart to the review path's durable
+        has_agent_reviewed check: an assignment redelivered after the PR was
+        already opened (a restart, or a failed mark-read) must not produce a
+        second PR. Relies on the deterministic branch name agent0/issue-<number>
+        instructed by the ASSIGNED_ISSUE prompt.
+
+        Args:
+            owner (str): Repository owner
+            repo (str): Repository name
+            number (int): Issue number
+
+        Returns:
+            bool: True if an open agent0/issue-<number> pull request exists
+        """
+
+        head_ref = f'agent0/issue-{number}'
+        try:
+            pulls = await self._client.get_open_pulls_by_head(owner, repo, head_ref)
+        except Exception:
+            # Best-effort guard: on a check failure, proceed rather than drop the
+            # assignment. The happy-path mark-read still prevents most duplicates.
+            log.warning(
+                'E7005: Failed to check existing PR for %s/%s#%d: %s',
+                owner,
+                repo,
+                number,
+                traceback.format_exc(),
+            )
+            return False
+        return len(pulls) > 0
 
     async def shutdown(self) -> None:
         """
