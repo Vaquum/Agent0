@@ -407,7 +407,7 @@ class Scheduler:
                     context.repo,
                     context.number,
                     f'Agent0 could not complete this assignment (status: {result.status}). '
-                    'A maintainer has been notified; the issue has not been resolved.',
+                    'The issue has not been resolved; please re-assign or ask for clarification.',
                 )
                 return
 
