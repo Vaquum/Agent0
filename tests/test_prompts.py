@@ -111,6 +111,68 @@ class TestPromptsModule:
         assert 'requires inline comments' in prompts.REVIEW_PR.lower()
         assert 'COMMENT' in prompts.REVIEW_PR
 
+    def test_review_pr_has_disposition_ledger(self) -> None:
+        """
+        Compute that REVIEW_PR requires a Disposition Ledger with the four dispositions.
+
+        Returns:
+            None
+        """
+
+        text = prompts.REVIEW_PR
+        assert 'Disposition Ledger' in text
+        assert 'blast' in text.lower()
+        for disposition in ('addressed', 'confirmed', 'refuted', 'carry-forward'):
+            assert disposition in text, f'{disposition} disposition missing from REVIEW_PR'
+
+    def test_review_pr_enumerates_all_participants(self) -> None:
+        """
+        Compute that REVIEW_PR enumerates findings from all three participant classes:
+        human reviewer threads, bot comments, and failing CI checks.
+
+        Returns:
+            None
+        """
+
+        text = prompts.REVIEW_PR
+        assert 'participant' in text.lower()
+        # Bot comments are surfaced via the shared comments endpoint.
+        assert 'bot' in text.lower()
+        # Failing CI checks are fetched via the check-runs API.
+        assert 'check-runs' in text
+        assert 'failing CI check' in text or 'failing checks' in text.lower()
+
+    def test_review_pr_gates_verdict_on_blank_disposition(self) -> None:
+        """
+        Compute that REVIEW_PR forbids submitting a verdict while any ledger row is blank.
+
+        This is the contract that makes an unaddressed bot finding or red check unable to
+        produce a clean verdict: silence is structurally impossible.
+
+        Returns:
+            None
+        """
+
+        text = prompts.REVIEW_PR
+        assert 'no verdict may be submitted while any ledger row' in text.lower()
+        # A red CI check must carry a written disposition, never be waved through.
+        assert 'red CI check' in text or 'red check' in text
+
+    def test_re_review_pr_dispositions_all_participants(self) -> None:
+        """
+        Compute that RE_REVIEW_PR extends the reply loop to bots and previously-red checks,
+        not only the agent's own prior threads.
+
+        Returns:
+            None
+        """
+
+        text = prompts.RE_REVIEW_PR
+        assert 'participant' in text.lower()
+        assert 'bot' in text.lower()
+        assert 'check-runs' in text
+        assert 'disposition' in text.lower()
+
     def test_mention_issue_has_gh_issue_comment(self) -> None:
         """
         Compute that mention in issue uses gh issue comment.
