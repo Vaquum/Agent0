@@ -3,11 +3,13 @@
 import asyncio
 import time
 from datetime import UTC, datetime
+from unittest.mock import AsyncMock
 
 import pytest
 
 from agent0.config import Config
-from agent0.daemon import Scheduler, _RunningTask
+from agent0.daemon import Daemon, Scheduler, _RunningTask
+from agent0.executor import ExecutorResult
 from agent0.router import TaskContext
 
 
@@ -187,3 +189,161 @@ class TestSchedulerSubmit:
             await task
         except asyncio.CancelledError:
             pass
+
+
+def _make_assignment(owner: str = 'org', repo: str = 'repo', number: int = 5) -> TaskContext:
+    return TaskContext(
+        event_type='assignment',
+        owner=owner,
+        repo=repo,
+        number=number,
+        subject_type='Issue',
+        trigger_user='alice',
+        trigger_text='do the thing',
+        issue_body='body',
+        diff=None,
+        comments=[],
+        labels=[],
+        head_ref=None,
+        base_ref=None,
+        notification_id='n1',
+    )
+
+
+def _make_result(status: str = 'success') -> ExecutorResult:
+    return ExecutorResult(
+        status=status,
+        response=None,
+        error=None,
+        input_tokens=0,
+        output_tokens=0,
+        cost_usd=0.0,
+        num_turns=0,
+        duration_seconds=0.0,
+        raw_output='',
+    )
+
+
+class TestAssignmentPrExists:
+    @pytest.mark.asyncio
+    async def test_true_when_open_pr_exists(self) -> None:
+        daemon = Daemon(_make_config())
+        await daemon._client.close()
+        daemon._client = AsyncMock()
+        daemon._client.get_open_pulls_by_head.return_value = [{'number': 3}]
+
+        assert await daemon._assignment_pr_exists('org', 'repo', 5) is True
+        daemon._client.get_open_pulls_by_head.assert_awaited_once_with(
+            'org', 'repo', 'agent0/issue-5'
+        )
+
+    @pytest.mark.asyncio
+    async def test_false_when_no_pr(self) -> None:
+        daemon = Daemon(_make_config())
+        await daemon._client.close()
+        daemon._client = AsyncMock()
+        daemon._client.get_open_pulls_by_head.return_value = []
+
+        assert await daemon._assignment_pr_exists('org', 'repo', 5) is False
+
+    @pytest.mark.asyncio
+    async def test_false_on_check_error(self) -> None:
+        daemon = Daemon(_make_config())
+        await daemon._client.close()
+        daemon._client = AsyncMock()
+        daemon._client.get_open_pulls_by_head.side_effect = RuntimeError('boom')
+
+        assert await daemon._assignment_pr_exists('org', 'repo', 5) is False
+
+
+class TestHandleAssignmentOutcome:
+    @pytest.mark.asyncio
+    async def test_failure_comments_on_issue(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(number=7), _make_result('failure'), '2026-06-08T00:00:00+00:00'
+        )
+
+        scheduler._client.create_issue_comment.assert_awaited_once()
+        args = scheduler._client.create_issue_comment.await_args[0]
+        assert args[:3] == ('org', 'repo', 7)
+        assert 'failure' in args[3]
+
+    @pytest.mark.asyncio
+    async def test_timeout_comments_on_issue(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(), _make_result('timeout'), '2026-06-08T00:00:00+00:00'
+        )
+
+        scheduler._client.create_issue_comment.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_success_with_pr_stays_silent(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+        scheduler._client.get_open_pulls_by_head.return_value = [{'number': 9}]
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(), _make_result('success'), '2026-06-08T00:00:00+00:00'
+        )
+
+        scheduler._client.create_issue_comment.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_success_no_pr_no_comment_flags_noop(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+        scheduler._client.get_open_pulls_by_head.return_value = []
+        scheduler._client.get_issue_comments.return_value = []
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(), _make_result('success'), '2026-06-08T00:00:00+00:00'
+        )
+
+        scheduler._client.create_issue_comment.assert_awaited_once()
+        assert 'no-op' in scheduler._client.create_issue_comment.await_args[0][3]
+
+    @pytest.mark.asyncio
+    async def test_success_no_pr_but_agent_commented_stays_silent(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+        scheduler._client.get_open_pulls_by_head.return_value = []
+        scheduler._client.get_issue_comments.return_value = [
+            {'user': {'login': 'test-bot'}, 'created_at': '2026-06-08T01:00:00Z'},
+        ]
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(), _make_result('success'), '2026-06-08T00:00:00+00:00'
+        )
+
+        scheduler._client.create_issue_comment.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_success_stale_agent_comment_flags_noop(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+        scheduler._client.get_open_pulls_by_head.return_value = []
+        scheduler._client.get_issue_comments.return_value = [
+            {'user': {'login': 'test-bot'}, 'created_at': '2026-06-07T00:00:00Z'},
+        ]
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(), _make_result('success'), '2026-06-08T00:00:00+00:00'
+        )
+
+        scheduler._client.create_issue_comment.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_outcome_never_raises_on_api_error(self) -> None:
+        scheduler = Scheduler(_make_config())
+        scheduler._client = AsyncMock()
+        scheduler._client.create_issue_comment.side_effect = RuntimeError('boom')
+
+        await scheduler._handle_assignment_outcome(
+            _make_assignment(), _make_result('failure'), '2026-06-08T00:00:00+00:00'
+        )

@@ -89,15 +89,26 @@ Labels: {labels}
 Conversation:
 {formatted_comments}
 
-Read the issue carefully. If the task is clear, do the work:
-1. Create a branch named agent0/{{short-description}}
-2. Implement the changes
-3. Commit and push
-4. Create a PR referencing this issue (use "Closes #{number}" in the PR body)
-5. Comment on the issue with a summary of what you did
+Read the issue carefully. If it is unclear, or you lack the information to do it \
+correctly, comment on the issue asking for clarification and stop. Do not guess.
 
-If the task is unclear or you need more information, comment on the issue asking for \
-clarification. Do not guess."""
+If the task is clear, do the work:
+1. Read the surrounding code first. Understand the existing structure, patterns, and \
+conventions before changing anything. Stay strictly within the scope of this issue — \
+do not refactor or fix unrelated things.
+2. Create a branch named agent0/issue-{number} — use this exact name so that re-runs \
+do not create duplicate branches or pull requests.
+3. Implement the change, and add or update tests that cover it.
+4. Before pushing, verify locally: run the test suite, and run `ruff check` and \
+`ruff format`, plus any type check the repo uses. Fix every failure. Do not push code \
+that fails these checks.
+5. Update CHANGELOG.md and bump the version in pyproject.toml.
+6. Commit and push.
+7. Open a pull request whose body contains "Closes #{number}".
+8. Comment on the issue with a short summary of what you did and a link to the PR.
+
+Always leave a comment on the issue describing the outcome — whether you opened a PR, \
+asked for clarification, or could not proceed. Never finish silently."""
 
 
 REVIEW_PR = """You have been asked to review PR #{number}: "{title}"
