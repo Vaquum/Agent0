@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Removed
+- Disabled `review_requested` routing so Agent0 cannot submit pull-request reviews. Ignored requests are marked read; mention, assignment, author, comment, and CI-failure handling are unchanged.
+
 ## [0.1.5] - 2026-06-08
 
 ### Changed

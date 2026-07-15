@@ -3,7 +3,7 @@
 import asyncio
 import time
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -189,6 +189,61 @@ class TestSchedulerSubmit:
             await task
         except asyncio.CancelledError:
             pass
+
+
+class TestIgnoreReviewRequest:
+    @pytest.mark.asyncio
+    async def test_mark_read_failure_still_ignores_review_request(self) -> None:
+        daemon = Daemon(_make_config())
+        await daemon._client.close()
+        daemon._poller = AsyncMock()
+        daemon._poller.mark_read.side_effect = RuntimeError('boom')
+
+        ignored = await daemon._ignore_review_request(
+            {'id': 'review-notification', 'reason': 'review_requested'}
+        )
+
+        assert ignored is True
+
+    @pytest.mark.asyncio
+    async def test_poll_loop_discards_review_request_and_routes_mention(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        daemon = Daemon(_make_config())
+        await daemon._client.close()
+        review = {'id': 'review-notification', 'reason': 'review_requested'}
+        mention = {'id': 'mention-notification', 'reason': 'mention'}
+        daemon._poller = AsyncMock()
+        daemon._poller.poll.return_value = [review, mention]
+        daemon._poller.fetch_context.return_value = {
+            'owner': 'testorg',
+            'repo': 'repo',
+            'number': 42,
+            'subject_type': 'Issue',
+            'body': 'Help wanted',
+            'labels': [],
+            'comments': [],
+            'actor': 'alice',
+            'diff': None,
+            'head_ref': None,
+            'base_ref': None,
+        }
+        daemon._scheduler = Mock()
+        daemon._scheduler.has_task_for.return_value = False
+
+        async def stop_after_first_poll(_seconds: float) -> None:
+            daemon._running = False
+
+        monkeypatch.setattr(asyncio, 'sleep', stop_after_first_poll)
+
+        await daemon.poll_loop()
+
+        daemon._poller.mark_read.assert_awaited_once_with('review-notification')
+        daemon._poller.fetch_context.assert_awaited_once_with(mention)
+        daemon._scheduler.submit.assert_called_once()
+        submitted = daemon._scheduler.submit.call_args.args[0]
+        assert submitted.event_type == 'mention'
+        assert submitted.number == 42
 
 
 def _make_assignment(owner: str = 'org', repo: str = 'repo', number: int = 5) -> TaskContext:

@@ -28,7 +28,7 @@ GitHub sends a notification whenever there is new activity on a thread where Age
 | `assign` | Agent0 was assigned to an issue | Read the issue, implement, open a PR |
 | `mention` | Someone @mentioned Agent0 | Read the mention and respond |
 | `author` | Activity on something Agent0 authored | Read the new activity and act on it |
-| `review_requested` | Someone requested Agent0's review | Review the PR and submit feedback |
+| `review_requested` | Someone requested Agent0's review | Ignore the request; no review is submitted |
 | `ci_activity` | CI checks completed | If checks failed on Agent0's PR, fix and push |
 
 ## Multi-Round Reviews

@@ -11,7 +11,7 @@ commands, making commits, and interacting with GitHub.
 ### Identity
 
 - GitHub user: `zero-bang`
-- Acts under this identity for all GitHub interactions (comments, commits, reviews, PRs)
+- Acts under this identity for GitHub interactions (comments, commits, and PRs)
 
 ### Whitelisted Organizations
 
@@ -75,11 +75,10 @@ Classifies each notification and determines the action type.
 |---|---|
 | Mentioned in issue/PR comment (`@zero-bang ...`) | Parse the text after the mention, execute the request |
 | Assigned to issue | Read the issue, assess what's needed, act on it |
-| Review requested on PR | Check out the PR, review the code, submit review |
-| Assigned to PR | Same as review requested |
+| Review requested on PR | Ignore; PR review automation is disabled |
 
 The router extracts:
-- **Event type**: mention, assignment, review request
+- **Event type**: mention, assignment, or CI failure
 - **Repository**: owner/repo
 - **Reference**: issue number, PR number, or comment URL
 - **Context**: the text/body that triggered the notification
@@ -143,7 +142,7 @@ Records every action with full traceability.
 Each audit entry contains:
 - **Timestamp** (UTC)
 - **Notification ID**
-- **Event type** (mention, assignment, review request)
+- **Event type** (mention, assignment, or CI failure)
 - **Repository** (owner/repo)
 - **Reference** (issue/PR number)
 - **Trigger** (who triggered it, what they said)

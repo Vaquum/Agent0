@@ -46,7 +46,7 @@ GET https://api.github.com/notifications
 | Parameter | Value | Purpose |
 |---|---|---|
 | `all` | `false` | Only unread notifications |
-| `participating` | `true` | Only where `zero-bang` is directly involved (mentioned, assigned, review requested) |
+| `participating` | `true` | Only where `zero-bang` is directly involved; review requests returned by GitHub are discarded and marked read before routing |
 
 ### Response Handling
 
@@ -80,8 +80,10 @@ For each notification:
    is determined by fetching the triggering event and checking the actor.
 3. **Dedup check** — if `notification.id` was already processed (tracked in memory),
    skip.
-4. **Route** — pass to the router for classification.
-5. **Mark as read** — `PATCH /notifications/threads/{id}` to mark the notification as
+4. **Review guard** — if the reason is `review_requested`, mark it read and stop; no
+   context is fetched and no task is scheduled.
+5. **Route** — pass all remaining actionable notifications to the router for classification.
+6. **Mark as read** — `PATCH /notifications/threads/{id}` to mark the notification as
    read.
 
 ### Rate Limiting

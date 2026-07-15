@@ -45,6 +45,9 @@ The main loop is a single `asyncio` event loop running in the main thread.
 while running:
     notifications = poller.poll()
     for notification in notifications:
+        if notification.reason == "review_requested":
+            poller.mark_read(notification.id)
+            continue
         if router.should_process(notification):
             task = router.classify(notification)
             scheduler.submit(task)
@@ -55,6 +58,7 @@ while running:
 
 - The loop runs every `POLL_INTERVAL` seconds (default: 30).
 - `poller.poll()` is a synchronous HTTP call (fast, <1 second).
+- `review_requested` notifications are marked read and discarded before routing.
 - `router.classify()` is pure logic, no I/O.
 - `scheduler.submit()` hands the task off for execution — does not block the loop.
 - The loop itself is never blocked by task execution.
@@ -186,7 +190,7 @@ and renders three sections:
 
 **Running tasks** section shows:
 - Repository (owner/repo)
-- Event type (mention, assignment, review request)
+- Event type (mention, assignment, or CI failure)
 - Trigger (who triggered, brief summary)
 - Started at (UTC timestamp)
 - Elapsed time

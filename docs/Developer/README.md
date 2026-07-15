@@ -11,7 +11,7 @@ Agent0 is a daemon that operates as an autonomous software engineer on GitHub. I
 ## How It Works
 
 1. **Poll** — The daemon polls GitHub's notifications API for activity on whitelisted orgs
-2. **Route** — Each notification is classified into an event type (mention, assignment, review request, CI failure)
+2. **Route** — Each notification is classified into an event type (mention, assignment, or CI failure); review requests are filtered out
 3. **Execute** — Claude Code CLI receives a structured prompt, works in a repo workspace, and interacts with GitHub via `gh`
 4. **Report** — Results are audited to JSONL files and surfaced through the dashboard
 

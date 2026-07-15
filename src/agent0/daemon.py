@@ -548,6 +548,31 @@ class Daemon:
         self._config.audit_dir.mkdir(parents=True, exist_ok=True)
         log.info('Data directories initialized')
 
+    async def _ignore_review_request(self, notification: dict[str, Any]) -> bool:
+        """
+        Discard a review request without allowing it into the execution pipeline.
+
+        Args:
+            notification (dict[str, Any]): GitHub notification object
+
+        Returns:
+            bool: True when the notification was a discarded review request
+        """
+
+        if notification.get('reason', '') != 'review_requested':
+            return False
+
+        notification_id = notification.get('id', '')
+        log.info('Ignoring disabled review request notification %s', notification_id)
+        try:
+            await self._poller.mark_read(notification_id)
+        except Exception:
+            log.warning(
+                'E2004: Failed to mark ignored review request %s as read',
+                notification_id,
+            )
+        return True
+
     async def poll_loop(self) -> None:
         """
         Compute main polling loop that processes notifications.
@@ -569,6 +594,9 @@ class Daemon:
                     log.info('Received %d notification(s)', len(notifications))
 
                 for notification in notifications:
+                    if await self._ignore_review_request(notification):
+                        continue
+
                     if not should_process(notification, self._config):
                         continue
 

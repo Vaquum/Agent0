@@ -14,7 +14,7 @@
 
 # Value Proposition
 
-Agent0 polls GitHub notifications, classifies actionable events (mentions, assignments, review requests, CI failures), runs Claude Code tasks in isolated workspaces, and posts results back — all without human intervention.
+Agent0 polls GitHub notifications, classifies actionable events (mentions, assignments, and CI failures), runs Claude Code tasks in isolated workspaces, and posts results back — all without human intervention. Pull-request review requests are intentionally ignored.
 
 # Quick Start
 
