@@ -8,13 +8,13 @@
 
 ## Notifications Not Picked Up
 
-**Symptom:** Agent0 is running but not responding to @mentions, assignments, or reviews.
+**Symptom:** Agent0 is running but not responding to @mentions or assignments.
 
 **Check the poll log.** Look for `Poll returned 0 actionable notifications` in the dashboard log. If polls consistently return 0:
 
 1. **Org not whitelisted** — The repo must belong to an org in `WHITELISTED_ORGS`. Check with `docker logs agent0 | grep 'non-whitelisted'`.
 
-2. **Notification reason not actionable** — Only `mention`, `assign`, `review_requested`, `ci_activity`, `author`, and `comment` are processed. Reasons like `subscribed` are silently dropped.
+2. **Notification reason not actionable** — Only `mention`, `assign`, `ci_activity`, `author`, and `comment` are processed. `review_requested`, `subscribed`, and other reasons are intentionally dropped.
 
 3. **Already processed** — The poller deduplicates by `{notification_id: updated_at}`. If the notification's `updated_at` has not changed since last processing, it is skipped. A fresh poll (every 10th cycle) resets the `If-Modified-Since` cache but not the deduplication dict.
 

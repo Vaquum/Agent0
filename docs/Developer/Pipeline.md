@@ -30,13 +30,14 @@ GitHub API  →  Poller  →  Router  →  Scheduler  →  Executor  →  GitHub
 
 ## Step 2: Reason Filtering
 
-`router.should_process()` checks the notification `reason` field:
+Before routing, the daemon discards `review_requested` notifications and marks them read.
+`router.should_process()` then checks the remaining notification `reason` values:
 
 | Reason | Passes filter | Meaning |
 |--------|:---:|---------|
 | `mention` | ✓ | Someone @mentioned the agent |
 | `assign` | ✓ | Agent was assigned to an issue |
-| `review_requested` | ✓ | Someone requested the agent's review |
+| `review_requested` | ✗ | Review automation is intentionally disabled |
 | `ci_activity` | ✓ | CI checks completed on a thread the agent participates in |
 | `author` | ✓ | Activity on something the agent authored (e.g., review on agent's PR) |
 | `subscribed` | ✗ | Watching the repo — not actionable |
@@ -78,7 +79,7 @@ When the agent pushes code or leaves comments, GitHub generates notifications fo
 |-------------------|-----------|---------------------|
 | `mention` | `mention` | `_MENTION_ISSUE` or `_MENTION_PR` |
 | `assign` | `assignment` | `_ASSIGNED_ISSUE` |
-| `review_requested` | `review_request` | `_REVIEW_PR` |
+| `review_requested` | — | — (filtered in Step 2) |
 | `ci_activity` | `ci_failure` | `_CI_FAILURE` |
 | `author` | `mention` | `_MENTION_ISSUE` or `_MENTION_PR` |
 | `comment` | `mention` | `_MENTION_ISSUE` or `_MENTION_PR` |

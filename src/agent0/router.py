@@ -12,11 +12,11 @@ log = logging.getLogger(__name__)
 ACTIONABLE_REASONS = {
     'mention',
     'assign',
-    'review_requested',
     'ci_activity',
     'author',
     'comment',
 }
+# `review_requested` is intentionally excluded: Agent0 must not submit PR reviews.
 
 
 @dataclass

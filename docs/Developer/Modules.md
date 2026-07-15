@@ -115,7 +115,7 @@ Dataclass carrying all context needed for execution.
 
 ### `should_process(notification, config) -> bool`
 
-Returns `True` if the notification reason is actionable (`mention`, `assign`, `review_requested`, `ci_activity`, `author`).
+Returns `True` if the notification reason is actionable (`mention`, `assign`, `ci_activity`, `author`, or `comment`). Review requests are intentionally not actionable.
 
 ### `classify(notification, context, config) -> TaskContext`
 

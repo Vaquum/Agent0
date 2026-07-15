@@ -2,16 +2,20 @@
 
 ## 1. Overview
 
-Agent0 performs exactly four types of actions. Each action is triggered by a specific
-GitHub event and follows a defined workflow. The action type is determined by the router
-and shapes the prompt given to the Claude Code executor.
+Agent0 performs three user-triggered actions. Each action follows a defined workflow. The
+action type is determined by the router and shapes the prompt given to the Claude Code
+executor. CI-failure recovery is a separate background lifecycle described in the daemon
+specification.
 
 | # | Trigger | Action |
 |---|---|---|
 | 1 | Assigned to issue (implementation task) | Code the solution, create a PR |
 | 2 | Assigned to issue (spec task) | Write the spec, post it in the issue |
-| 3 | Assigned as reviewer to PR | Review the code, approve or request changes |
-| 4 | @mentioned in issue or PR | Read the context, post a comment |
+| 3 | @mentioned in issue or PR | Read the context, post a comment |
+
+`review_requested` notifications are intentionally discarded by the daemon before routing
+and excluded from the router's actionable reasons. Agent0 does not submit pull-request
+reviews.
 
 ## 2. Action 1: Code and PR
 
@@ -104,11 +108,16 @@ structure:
 The exact format depends on what the issue asks for — Claude Code has judgment to
 structure the response appropriately.
 
-## 4. Action 3: Review PR
+## 4. Disabled Action: Review PR
+
+This action is not reachable from the daemon. The daemon discards `review_requested`
+notifications before context fetching or execution, marks them read, and keeps a second
+guard in the router's actionable-reason filter. The legacy workflow below is retained only
+as an implementation reference.
 
 ### Trigger
 
-- Notification reason: `review_requested`
+- No active trigger (`review_requested` is filtered)
 - Subject type: `PullRequest`
 
 ### Workflow
@@ -143,7 +152,7 @@ structure the response appropriately.
 - Does not push changes to the PR branch (only the PR author does that)
 - Does not dismiss other reviews
 
-## 5. Action 4: Comment on Mention
+## 5. Action 3: Comment on Mention
 
 ### Trigger
 

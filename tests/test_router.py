@@ -49,15 +49,15 @@ class TestShouldProcess:
 
         assert should_process({'reason': 'assign'}, _make_config())
 
-    def test_review_requested(self) -> None:
+    def test_review_requested_not_actionable(self) -> None:
         """
-        Compute that review_requested reason is actionable.
+        Compute that review_requested reason is intentionally ignored.
 
         Returns:
             None
         """
 
-        assert should_process({'reason': 'review_requested'}, _make_config())
+        assert not should_process({'reason': 'review_requested'}, _make_config())
 
     def test_ci_activity(self) -> None:
         """
